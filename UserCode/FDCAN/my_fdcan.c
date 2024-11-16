@@ -3,38 +3,23 @@
 #include "innfos_ne30.h"
 #include "global.h"
 
-/**
- * @brief CAN����FIFO0�ж�
- * @param hcan CAN���
- */
- void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
-{
-	if(hfdcan->Instance == FDCAN1)
-	{
-		can_receive(&fdcan1);
-		switch (fdcan1.rx_header_t->Identifier)
-		{
-		case 0x01:
-		    SCA_DataProcess(&scaMotor[0]);
-			
-			break;
-		
-		default:
-			break;
-		}
-  	}
-
-}
 
 
 /****************************************************************************************************************************** */
 
+/**
+ * @brief can bus initialization
+ * @param can can bus instance
+ * @param hcan hal library can handle
+ * @return OK or ERROR
+ */
 uint8_t can_init(Can_t *can, FDCAN_HandleTypeDef* hcan)
 {
 	if(can == NULL || hcan == NULL)
 		return ERROR; 
 	can->hcan_t = hcan;
 	can->mutex = xSemaphoreCreateMutex();
+	can->rx_sema = xSemaphoreCreateBinary();
 	HAL_FDCAN_Start(can->hcan_t);
 	HAL_FDCAN_ActivateNotification(can->hcan_t,FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0);
 	HAL_FDCAN_ActivateNotification(can->hcan_t,FDCAN_IT_RX_FIFO1_NEW_MESSAGE,0);
@@ -46,13 +31,13 @@ uint8_t can_init(Can_t *can, FDCAN_HandleTypeDef* hcan)
 		return ERROR;
 	}
 	
-	can_filter_config->IdType = FDCAN_STANDARD_ID;                       //??ID  FDCAN_STANDARD_ID
-    can_filter_config->FilterIndex = 1;                  				//?????                   
-    can_filter_config->FilterType = FDCAN_FILTER_RANGE;        			//?????
-    can_filter_config->FilterConfig = FDCAN_FILTER_TO_RXFIFO0;          //???x???FIFOx   FDCAN_FILTER_TO_RXFIFOx
-    can_filter_config->FilterID1 = 0x001;                  				//32?ID
-    can_filter_config->FilterID2 = 0xFFF;                  				//??FDCAN?????????????32???
-    if(HAL_FDCAN_ConfigFilter(can->hcan_t, can_filter_config)!=HAL_OK) 			//??????
+	can_filter_config->IdType = FDCAN_STANDARD_ID;                      //ID mode  FDCAN_STANDARD_ID
+    can_filter_config->FilterIndex = 1;                  				//filter index                   
+    can_filter_config->FilterType = FDCAN_FILTER_RANGE;        			//filter type :range, mask
+    can_filter_config->FilterConfig = FDCAN_FILTER_TO_RXFIFO0;          //FIFOx   FDCAN_FILTER_TO_RXFIFOx
+    can_filter_config->FilterID1 = 0x001;                  				//start id
+    can_filter_config->FilterID2 = 0xFFF;                  				//end id
+    if(HAL_FDCAN_ConfigFilter(can->hcan_t, can_filter_config)!=HAL_OK) 			//can filter config
 	{
 		log_e("CAN滤波器配置失败 ");
 		Error_Handler();
@@ -61,6 +46,14 @@ uint8_t can_init(Can_t *can, FDCAN_HandleTypeDef* hcan)
 	return OK;
 }
 
+/**
+ * @brief can bus send message
+ * @param can can bus instance
+ * @param id message id
+ * @param data message data
+ * @param dlc message length
+ * @return OK or ERROR
+ */
 uint8_t can_send(Can_t *can, uint32_t id, uint8_t * data, uint8_t dlc)
 {
 	uint8_t result = ERROR;
@@ -86,6 +79,11 @@ uint8_t can_send(Can_t *can, uint32_t id, uint8_t * data, uint8_t dlc)
 	return result;	
 }
 
+/**
+ * @brief can bus receive message
+ * @param can can bus instance
+ * @return OK or ERROR 
+ */
 uint8_t can_receive(Can_t *can)
 {
 	if(can == NULL)
@@ -96,3 +94,19 @@ uint8_t can_receive(Can_t *can)
 	return result;
 }
 
+/********************************IRQ********************************************************* */
+/**
+ * @brief can bus fifo0 irq callback
+ * @param hcan can instacne
+ */
+ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+	if(hfdcan->Instance == FDCAN1)
+	{
+		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+		can_receive(&fdcan1);
+		xSemaphoreGiveFromISR(fdcan1.rx_sema, &xHigherPriorityTaskWoken);
+		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+	}
+
+}

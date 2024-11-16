@@ -6,10 +6,11 @@
 
 typedef struct
 {
-    FDCAN_HandleTypeDef * hcan_t;
+    FDCAN_HandleTypeDef * hcan_t;   // hal library handle
     FDCAN_RxHeaderTypeDef * rx_header_t;
-    uint8_t rx_data[8];
-    SemaphoreHandle_t mutex;
+    uint8_t rx_data[8];//rx data buffer
+    SemaphoreHandle_t mutex;//tx mutex semaphore 
+    SemaphoreHandle_t rx_sema;//rx binary semaphore
 }Can_t;
 
 uint8_t can_init(Can_t *can, FDCAN_HandleTypeDef* hcan);

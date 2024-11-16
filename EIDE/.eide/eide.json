@@ -35,31 +35,31 @@
                 "name": "Core",
                 "files": [
                   {
-                    "path": "../Core/Src/main.c"
-                  },
-                  {
-                    "path": "../Core/Src/gpio.c"
-                  },
-                  {
-                    "path": "../Core/Src/freertos.c"
-                  },
-                  {
                     "path": "../Core/Src/dma.c"
                   },
                   {
                     "path": "../Core/Src/fdcan.c"
                   },
                   {
-                    "path": "../Core/Src/usart.c"
+                    "path": "../Core/Src/freertos.c"
                   },
                   {
-                    "path": "../Core/Src/stm32h7xx_it.c"
+                    "path": "../Core/Src/gpio.c"
+                  },
+                  {
+                    "path": "../Core/Src/main.c"
                   },
                   {
                     "path": "../Core/Src/stm32h7xx_hal_msp.c"
                   },
                   {
                     "path": "../Core/Src/stm32h7xx_hal_timebase_tim.c"
+                  },
+                  {
+                    "path": "../Core/Src/stm32h7xx_it.c"
+                  },
+                  {
+                    "path": "../Core/Src/usart.c"
                   }
                 ],
                 "folders": []
@@ -102,6 +102,15 @@
         "name": "Drivers",
         "files": [],
         "folders": [
+          {
+            "name": "CMSIS",
+            "files": [
+              {
+                "path": "../Core/Src/system_stm32h7xx.c"
+              }
+            ],
+            "folders": []
+          },
           {
             "name": "STM32H7xx_HAL_Driver",
             "files": [
@@ -170,24 +179,12 @@
               }
             ],
             "folders": []
-          },
-          {
-            "name": "CMSIS",
-            "files": [
-              {
-                "path": "../Core/Src/system_stm32h7xx.c"
-              }
-            ],
-            "folders": []
           }
         ]
       },
       {
         "name": "FDCAN",
         "files": [
-          {
-            "path": "../UserCode/FDCAN/bsp_fdcan.c"
-          },
           {
             "path": "../UserCode/FDCAN/my_fdcan.c"
           }
@@ -243,10 +240,10 @@
             "path": "../UserCode/INNFOS_NE30/innfos_ne30.c"
           },
           {
-            "path": "../UserCode/INNFOS_NE30/sca_protocol.c"
+            "path": "../UserCode/INNFOS_NE30/ne30_task.c"
           },
           {
-            "path": "../UserCode/INNFOS_NE30/ne30_task.c"
+            "path": "../UserCode/INNFOS_NE30/sca_protocol.c"
           }
         ],
         "folders": []
@@ -282,7 +279,9 @@
   },
   "targets": {
     "SCA_Driver": {
-      "excludeList": [],
+      "excludeList": [
+        "<virtual_root>/FDCAN/bsp_fdcan.c"
+      ],
       "toolchain": "AC5",
       "compileConfig": {
         "cpuType": "Cortex-M7",

@@ -82,12 +82,12 @@ uint8_t SCA_SetMode(Sca_t * sca, uint8_t mode)
         err_t++;
         SCA_Write_1(sca->can, sca->id, W1_Mode, mode);
         SCA_GetMode(sca);
-        if(err_t >= 30)
+        if(err_t >= 3)
         {
             log_e("SCA 模式设置失败 ");
             return ERROR;
         }
-        vTaskDelay(100);
+        vTaskDelay(1000);
     }
     return OK;
 }
