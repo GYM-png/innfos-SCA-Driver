@@ -19,6 +19,7 @@
 
 //第二类读取指令
 #define R2_Voltage				0x45        //查询执行器电压(数据为真实值的2^10倍)
+#define R2_Current_Max			0x53
 #define R2_MotorTemp			0x5F        //查询电机温度
 #define R2_MotorProtectTemp		0x6C        //查询电机保护温度
 #define R2_MotorRecoverTemp		0x6E        //查询电机恢复温度
@@ -92,13 +93,16 @@
 #define W3_HomingCurrentLimitH	0x91
 #define W3_BlockEngy			0x7E
 
+//第四类写入命令
+#define W4_ClearError			0xFE
+#define W4_ClearHome			0x88
+#define W4_Save					0x0D
+
 //第五类写入命令
 #define W5_ChangeID				0x3D
 
 
 //变量缩放值定义
-
-#define Current_Max     16.50f          //相电流满量程 (A)
 #define Velocity_Max	6000.0f			//速度最大值，固定为6000RPM（仅作为换算用）
 #define BlkEngy_Scal	75.225f			//堵转能量缩放值
 #define Profile_Scal	960.0f			//梯形参数缩放值
@@ -110,7 +114,7 @@
 
 
 uint8_t SCA_Write_1(Can_t * can, uint32_t id, uint8_t cmd, uint8_t TxData);
-uint8_t SCA_Write_3(Can_t * can, uint32_t id, uint8_t cmd, float TxData);
+uint8_t SCA_Write_4(Can_t * can, uint32_t id, uint8_t cmd);
 uint8_t SCA_Write_5(Can_t * can, uint32_t id, uint8_t cmd, uint8_t TxData, uint8_t * serial_num);
 uint8_t SCA_Read(Can_t * can, uint32_t id, uint8_t cmd);
 

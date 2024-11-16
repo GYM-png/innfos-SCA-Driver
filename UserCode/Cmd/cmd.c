@@ -140,8 +140,8 @@ static UBaseType_t uxParameterNumber = 1;   //总参数量
     {
         log_v("SCA参数:");
         log_v("velocity:\t%.2frpm", scaMotor[0].Velocity_Real);
-        log_v("position:\t%.2f圈 ", scaMotor[0].Position_Real);
-        log_v("angle:\t\t%.2f度 ", scaMotor[0].Angle_Real);
+        log_v("position:\t%.2fR ", scaMotor[0].Position_Real);
+        log_v("angle:\t\t%.2f° ", scaMotor[0].Angle_Real);
         log_v("current:\t%.2f", scaMotor[0].Current_Real);
     }
     else if (strstr(parameterArray[0], "s"))

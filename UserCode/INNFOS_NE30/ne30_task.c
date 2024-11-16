@@ -82,7 +82,8 @@ static void sca_control_task(void * pvparameters)
         {
             log_i("sca%d power on and work in %s", scaMotor[0].id, find_name_of_mode(scaMotor[0].Mode));
             SCA_SetMode(&scaMotor[0], SCA_Profile_Velocity_Mode);
-            SCA_GetAllInfomation(&scaMotor[0]);
+            SCA_SetPPMaxcVelocity(&scaMotor[0], 200);
+            SCA_GetAllparameters(&scaMotor[0]);
             break;
         }
     }    

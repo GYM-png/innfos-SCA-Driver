@@ -75,13 +75,13 @@
             "path": "../UserCode/Cmd/cmd.c"
           },
           {
-            "path": "../UserCode/EasyLogger/elog.c"
-          },
-          {
             "path": "../UserCode/EasyLogger/elog_port.c"
           },
           {
             "path": "../UserCode/EasyLogger/elog_utils.c"
+          },
+          {
+            "path": "../UserCode/EasyLogger/elog.c"
           },
           {
             "path": "../UserCode/FreeRTOS_CLI/FreeRTOS_CLI.c"

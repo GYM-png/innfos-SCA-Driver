@@ -41,7 +41,7 @@ uint8_t SCA_Write_1(Can_t * can, uint32_t id, uint8_t cmd, uint8_t TxData)
  * @param TxData 
  * @return 
  */					
-uint8_t SCA_Write_3(Can_t * can, uint32_t id, uint8_t cmd, float TxData)
+uint8_t SCA_Write_3(Sca_t * sca, uint8_t cmd, float TxData)
 {
     static uint8_t tx_buf[5];
     int32_t temp;
@@ -51,7 +51,7 @@ uint8_t SCA_Write_3(Can_t * can, uint32_t id, uint8_t cmd, float TxData)
     if((cmd == W3_Velocity)||(cmd == W3_VelocityLimit))
         temp = TxData / Velocity_Max * IQ24;
     else if((cmd == W3_Current)||(cmd == W3_CurrentLimit))
-        temp = TxData / Current_Max * IQ24;
+        temp = TxData / sca->Current_MaxRange * IQ24;
     else if(cmd == W3_BlockEngy)
         temp = TxData * BlkEngy_Scal;	//堵转能量为真实值的75.225倍
     else
@@ -63,8 +63,26 @@ uint8_t SCA_Write_3(Can_t * can, uint32_t id, uint8_t cmd, float TxData)
     tx_buf[3] = (uint8_t)(temp>>8);
     tx_buf[4] = (uint8_t)(temp>>0);
 
-    return can_send(can, id, tx_buf, 5);
+    return can_send(sca->can, sca->id, tx_buf, 5);
 }
+
+
+/**
+  * @功	能	第4类写入命令，发送1byte，接收2byte
+  * @参	数	pSCA：要操作的执行器句柄指针或地址
+  *			cmd：操作指令
+  * @返	回	SCA_NoError：发送成功
+  *			其他通信错误参见 SCA_Error 错误列表
+  */
+uint8_t SCA_Write_4(Can_t * can, uint32_t id, uint8_t cmd)
+{
+	static uint8_t tx_buf[8];
+
+	tx_buf[0] = cmd;
+
+    return can_send(can, id, tx_buf, 1);
+}
+
 
 /**
   * @功	能	第5类写入命令，发送8byte，接收2byte
@@ -169,6 +187,9 @@ void R2dataProcess(Sca_t * sca)
 			sca->Motor_Recover_Temp = RxData;
 			break;
 		
+		case R2_Current_Max:
+		    sca->Current_MaxRange = RxData;
+		
 		case R2_Error:
 			sca->ptErrcode->Error_Code = (uint16_t)RxData;
 			warnBitAnaly(sca->ptErrcode);
@@ -201,7 +222,7 @@ void R3dataProcess(Sca_t * sca)
 		RxData = (float)temp / IQ24 * Velocity_Max; 
 	
 	else if((sca->can->rx_data[0] == R3_Current)||(sca->can->rx_data[0] == R3_CurrentLimit))
-		RxData = (float)temp / IQ24 * Current_Max; 
+		RxData = (float)temp / IQ24 * sca->Current_MaxRange; 
 	
 	else if(sca->can->rx_data[0] == R3_BlockEngy)
 		RxData = (float)temp / BlkEngy_Scal; 	//堵转能量为真实的75.225倍
@@ -302,7 +323,7 @@ void R4dataProcess(Sca_t * sca)
 
 	temp  = ((int32_t)sca->can->rx_data[6])<<24;
 	temp |= ((int32_t)sca->can->rx_data[7])<<16;
-	sca->Current_Real  = (float)temp / IQ30 * Current_Max; 
+	sca->Current_Real  = (float)temp / IQ30 * sca->Current_MaxRange; 
 	
 }
 

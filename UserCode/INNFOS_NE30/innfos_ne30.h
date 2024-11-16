@@ -1,15 +1,3 @@
-/*
- * @Author: GYM-png 480609450@qq.com
- * @Date: 2024-08-02 18:01:55
- * @LastEditors: GYM-png 480609450@qq.com
- * @LastEditTime: 2024-09-06 16:56:31
- * @FilePath: \EIDEd:\STM32project\Motor_SCA\UserCode\INNFOS_NE30\innfos_ne30.h
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
-//
-// Created by 48060 on 2024-07-25.
-//
-
 #ifndef INNFOS_NE30_INNFOS_NE30_H
 #define INNFOS_NE30_INNFOS_NE30_H
 
@@ -77,7 +65,8 @@ typedef struct
 	float Voltage;					//当前电压（单位：V）
 	float Motor_Temp;				//电机温度
 	float Motor_Protect_Temp;		//电机保护温度
-	float Motor_Recover_Temp;		//电机恢复温度	
+	float Motor_Recover_Temp;		//电机恢复温度
+	float Current_MaxRange;			//电流满量程 (A) 电流环使用
 	sca_errcode_t * ptErrcode;	    //电机报警信息
 
 	/* 第三类数据变量 */
@@ -112,20 +101,38 @@ uint8_t SCA_SetMode(Sca_t * sca, uint8_t mod);
 int8_t SCA_GetMode(Sca_t * sca);
 uint8_t SCA_GetSerialNumbe(Sca_t * sca);
 uint8_t SCA_SetID(Sca_t * sca, uint8_t id);
+
 uint8_t SCA_SetPosition(Sca_t * sca);
 uint8_t SCA_SetAngle(Sca_t * sca);
 uint8_t SCA_GetPosition(Sca_t * sca);
 uint8_t SCA_SetZeroAngle(Sca_t * sca, float angle);
+uint8_t SCA_GetPPAcceleration(Sca_t * sca);
+uint8_t SCA_GetPPDeceleration(Sca_t * sca);
+uint8_t SCA_SetPPAcceleration(Sca_t * sca, float acce);
+uint8_t SCa_SetPPDeceleration(Sca_t * sca, float dece);
+uint8_t SCA_GetPPMaxVelocity(Sca_t * sca);
+uint8_t SCA_SetPPMaxcVelocity(Sca_t * sca, float max_velocity);
+
 uint8_t SCA_SetVelocity(Sca_t * sca);
 uint8_t SCA_GetVelocity(Sca_t * sca);
-uint8_t SCA_SetAcceDece(Sca_t * sca, float acce, float dece);
+uint8_t SCA_GetPVAcceleration(Sca_t * sca);
+uint8_t SCA_GetPVDeceleration(Sca_t * sca);
+uint8_t SCA_SetPVAcceleration(Sca_t * sca, float acceleration);
+uint8_t SCA_SetPVDeceleration(Sca_t * sca, float deceleration);
 uint8_t SCA_GetVelocityLimit(Sca_t * sca);
-uint8_t SCA_SetProfileVelocityMaxVelocity(Sca_t * sca, float maxVelocity);
-uint8_t SCA_GetProfileVelocityMaxVelocity(Sca_t * sca);
+uint8_t SCA_GetPVMaxVelocity(Sca_t * sca);
+uint8_t SCA_SetPVMaxVelocity(Sca_t * sca, float maxVelocity);
+
 uint8_t SCA_SetCurrent(Sca_t* sca);
+uint8_t SCA_GetCurrentMaxRange(Sca_t* sca);
+uint8_t SCA_GetCurrentLimit(Sca_t* sca);
+
 uint8_t SCA_GetCVP(Sca_t * sca);
 uint8_t SCA_GetVoltage(Sca_t * sca);
-uint8_t SCA_GetAllInfomation(Sca_t * sca);
+uint8_t SCA_GetTemperature(Sca_t * sca);
+uint8_t SCA_GetAllparameters(Sca_t * sca);
+uint8_t SCA_SaveAllParamters(Sca_t * sca);
+
 uint8_t SCA_DataProcess(Sca_t * sca);
 
 

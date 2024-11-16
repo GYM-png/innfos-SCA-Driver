@@ -3,16 +3,25 @@
 #include "sca_protocol.h"
 #include "global.h"
 
+uint8_t SCA_Write_3(Sca_t * sca, uint8_t cmd, float TxData);
 void R1dataProcess(Sca_t * sca);
 void R2dataProcess(Sca_t * sca);
 void R3dataProcess(Sca_t * sca);
 void R4dataProcess(Sca_t * sca);
 void R5dataProcess(Sca_t * sca);
 
+
+
 /**
- * @brief enable sca controller
- * @param sca 
- * @return 
+ * @brief Enables the SCA motor.
+ *
+ * This function sends a command to the SCA motor to enable its operation.
+ * The motor will start responding to control commands after it is enabled.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the enable command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_Enable(Sca_t * sca)
 {
@@ -21,10 +30,17 @@ uint8_t SCA_Enable(Sca_t * sca)
     return SCA_Write_1(sca->can, sca->id, W1_PowerState, Actr_Enable);
 }
 
+
 /**
- * @brief disable sca controler
- * @param ptSca 
- * @return 
+ * @brief Disables the SCA motor.
+ *
+ * This function sends a command to the SCA motor to disable it.
+ * The motor will stop responding to control commands and enter a low-power state.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_Disable(Sca_t * sca)
 {
@@ -34,24 +50,36 @@ uint8_t SCA_Disable(Sca_t * sca)
     return SCA_Write_1(sca->can, sca->id, W1_PowerState, Actr_Disable);
 }
 
+
 /**
- * @brief get state of sca controller
- *        Check if the controller is enabled or disabled
- * @param sca 
- * @return 
+ * @brief Retrieves the state of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its power state.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the heartbeat is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_GetState(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
+
     return SCA_Read(sca->can, sca->id, R1_PowerState);
 }
 
+
 /**
- * @brief check heartbeat of sca controller
- *        the function can check the sca controller wheather online
- * @param sca 
- * @return 
+ * @brief Sends a heartbeat command to the SCA motor to check its status.
+ *
+ * This function sends a command to shake hands with the motor to check its connection status
+ * The motor will reply with a bit 0x00
+ * 
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the heartbeat is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_HeartBeat(Sca_t * sca)
 {
@@ -61,21 +89,28 @@ uint8_t SCA_HeartBeat(Sca_t * sca)
     return SCA_Read(sca->can, sca->id, R1_Heartbeat);
 }
 
+
 /**
- * @brief set work mode of sca controller
- * @param ptSca 
- * @param mod sca mode  @ref ne30WorkMode
- * @return 
+ * @brief Sets the mode of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to set its mode.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param mode Desired mode of the SCA motor. @ref ne30WorkMode in innfos_ne30.h
+ *
+ * @return Returns OK if the mode is successfully set.
+ *         Returns ERROR if the sca pointer is NULL or if the mode setting fails.
+ *         The function will retry setting the mode up to 3 times with a delay of 1 second between attempts.
  */
 uint8_t SCA_SetMode(Sca_t * sca, uint8_t mode)
 {
     if(sca == NULL)
         return ERROR;
+
     if (sca->Mode == mode)
         return OK;
 
     uint8_t result = ERROR;
-    
     uint8_t err_t= 0;
     while(sca->Mode != mode)
     {
@@ -92,6 +127,19 @@ uint8_t SCA_SetMode(Sca_t * sca, uint8_t mode)
     return OK;
 }
 
+
+
+/**
+ * @brief Retrieves the mode of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its mode.
+ * The mode is represented by a single byte value. @ref ne30WorkMode in innfos_ne30.h
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns the mode value if successful.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
 int8_t SCA_GetMode(Sca_t * sca)
 {
     if (sca == NULL)
@@ -100,38 +148,52 @@ int8_t SCA_GetMode(Sca_t * sca)
     return SCA_Read(sca->can, sca->id, R1_Mode);
 }
 
+
 /**
- * @brief get the serial number of sca controler
- * @param ptSca 
- * @return 
+ * @brief Retrieves the serial number of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its serial number.
+ * The serial number is a 6 bytes value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_GetSerialNumbe(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
-    
+
     return SCA_Read(sca->can, sca->id, R5_ShakeHands);
 }
 
 
+
 /**
- * @brief set sca controler id
- *        this function must be called when you hand get the serial number 
- *        and only one motor is on the can bus
- * @param ptSca 
- * @param id new id
- * @return 
+ * @brief Sets the ID of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to change its ID.
+ * Before changing the ID, it checks if the serial number of the SCA motor is available.
+ * If the serial number is not available, it logs an error message and returns ERROR.
+ * After changing the ID, it updates the ID value in the SCA_t structure.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param id The new ID to be set for the SCA motor.
+ *
+ * @return Returns OK if the ID is successfully set.
+ *         Returns ERROR if the sca pointer is NULL or the serial number is not available.
+ *         If the ID setting fails, it logs a warning message.
  */
 uint8_t SCA_SetID(Sca_t * sca, uint8_t id)
 {
     if(sca == NULL)
         return ERROR;
-    
+
     /* 判断是否查询到序列号 */
     uint16_t num = 0;
     for (uint8_t i = 0; i < 6; i++)
     {
-        
         num += sca->Serial_Num[i];
     }
     if (num == 0)
@@ -158,53 +220,89 @@ uint8_t SCA_SetID(Sca_t * sca, uint8_t id)
     return result;
 }
 
+
 /*********************************Position******************************************** */
 
+
 /**
- * @brief set the motor position as the Position_Target
- * @param ptSca 
- * @return 
+ * @brief Sets the target position for the SCA motor.
+ *
+ * This function sends a command to the SCA motor to set its target position.
+ * The target position is a float value representing the desired position in
+ * encoder counts. The function checks if the target position is within the
+ * valid range and logs a warning if it is not. It also checks if the SCA motor
+ * is in the correct mode to set the position and logs a warning if the mode is
+ * not appropriate.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the write command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL or if the mode is not
+ *         appropriate.
  */
 uint8_t SCA_SetPosition(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
+
     if(sca->Position_Target < -127.0f || sca->Position_Target > 127.0f)
         log_w("SCA 参数超范围 ");
+
     if (sca->Mode == SCA_Position_Mode || sca->Mode == SCA_Profile_Position_Mode)
     {
-        return SCA_Write_3(sca->can, sca->id, W3_Position, sca->Position_Target);
+        return SCA_Write_3(sca, W3_Position, sca->Position_Target);
     }
+
     log_w("SCA 模式不匹配 ");
     return ERROR;
 }
 
+
 /**
- * @brief set the motor position as the Angle_Target
- * @param ptSca 
- * @return 
+ * @brief Sets the target angle for the SCA motor.
+ *
+ * This function converts the target angle from degrees to revolutions,
+ * checks if the angle is within the valid range for the SCA motor,
+ * and then sends a command to the SCA motor to set its target position.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the write command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL or the angle is out of range.
+ *         If the SCA motor is not in position mode, it logs a warning message and returns ERROR.
  */
 uint8_t SCA_SetAngle(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
+
     float position = sca->Angle_Target / 360.0f;
+
     if(position < -127.0f || position > 127.0f)
+    {
         log_w("SCA 参数超范围 ");
+    }
     if (sca->Mode == SCA_Position_Mode || sca->Mode == SCA_Profile_Position_Mode)
     {
-        return SCA_Write_3(sca->can, sca->id, W3_Position, position);
+        return SCA_Write_3(sca, W3_Position, position);
     }
+
     log_w("SCA 模式不匹配 ");
     return ERROR;
 }
 
 
 /**
- * @brief get the motor position
- *        the information will update the "Position_Real" and "Angle_Real"
- * @param ptSca 
- * @return 
+ * @brief Retrieves the position of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its position.
+ * The position is a float value representing the current
+ * position of the motor in encoder counts.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_GetPosition(Sca_t * sca)
 {
@@ -213,11 +311,19 @@ uint8_t SCA_GetPosition(Sca_t * sca)
     return SCA_Read(sca->can, sca->id, R3_Position);
 }
 
+
 /**
- * @brief set the motor homing angle
- * @param ptSca 
- * @param angle 
- * @return 
+ * @brief Sets the zero angle for the SCA motor.
+ *
+ * This function is used to set the zero angle for the SCA motor. It writes the homing value to the motor,
+ * which is used to determine the zero position. If the angle provided is 0, the homing value is set to 0.
+ * Otherwise, the angle is converted to a position value (0 to 1) and written to the motor.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param angle The angle to set as the zero angle for the motor.
+ *
+ * @return Returns OK if the homing value is successfully set.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_SetZeroAngle(Sca_t * sca, float angle)
 {
@@ -226,35 +332,206 @@ uint8_t SCA_SetZeroAngle(Sca_t * sca, float angle)
         return ERROR;
     if (angle == 0)
     {
-        return SCA_Write_3(sca->can, sca->id, W3_HomingValue, 0);
+        return SCA_Write_3(sca, W3_HomingValue, 0);
     }
     else
     {
         float position = angle / 360.0f;
-        return SCA_Write_3(sca->can, sca->id, W3_HomingValue, position);
+        return SCA_Write_3(sca, W3_HomingValue, position);
     }
 }
+
+/**
+ * @brief Gets the acceleration for the Profile Position Mode.
+ *
+ * This function reads the acceleration value from the SCA motor's Profile Position Mode
+ * and returns it.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_GetPPAcceleration(Sca_t * sca)
+{
+    if(sca == NULL)
+        return ERROR;
+
+    return SCA_Read(sca->can, sca->id, R3_PPMaxAcceleration);
+}
+
+
+
+/**
+ * @brief Retrieves the deceleration limit for the Profile Position Mode of the SCA motor.
+ *
+ * This function reads the deceleration limit value from the SCA motor s Profile Position Mode.
+ * The deceleration limit is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_GetPPDeceleration(Sca_t * sca)
+{
+    if(sca == NULL)
+        return ERROR;
+    
+    return SCA_Read(sca->can, sca->id, R3_PPMaxDeceleration);
+}
+
+
+/**
+ * @brief Sets the acceleration for the Profile Position Mode.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param acce Desired acceleration value in the unit of Profile_Scal.
+ *
+ * @return Returns OK if the acceleration is successfully set.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_SetPPAcceleration(Sca_t * sca, float acce)
+{
+    if(sca == NULL)
+        return ERROR;
+    
+    uint8_t result = ERROR;
+    acce /= Profile_Scal;
+
+    result = SCA_Write_3(sca, W3_PPMaxAcceleration, acce);
+    if (result != OK)   
+    {
+        log_e("PPAcceleration 写入失败 ");
+        return result;
+    }
+
+    SCA_GetPPAcceleration(sca);
+    return OK;
+    
+}
+
+
+/**
+ * @brief Sets the deceleration for the Profile Position Mode.
+ *
+ * This function sets the deceleration value for the Profile Position Mode of the SCA motor.
+ * The deceleration value is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param dece Desired deceleration value in the unit of Profile_Scal.
+ *
+ * @return Returns OK if the deceleration value is successfully set.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCa_SetPPDeceleration(Sca_t * sca, float dece)
+{
+    if(sca == NULL)
+        return ERROR;
+
+    uint8_t result = ERROR;
+    dece /= Profile_Scal;
+    result = SCA_Write_3(sca, W3_PPMaxDeceleration, dece);
+    if (result != OK)
+    {
+        log_e("PPDeceleration 写入失败");
+        return ERROR;
+    }
+    SCA_GetPPDeceleration(sca);
+    return OK; 
+}
+
+
+
+/**
+ * @brief Gets the maximum velocity for the Profile Position Mode.
+ *
+ * This function reads the maximum velocity value from the SCA motor's Profile Position Mode
+ * and returns it. The value is scaled by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_GetPPMaxVelocity(Sca_t * sca)
+{
+    if (sca == NULL)
+        return ERROR;
+
+    return SCA_Read(sca->can, sca->id, R3_PPMaxVelocity);
+}
+
+
+/**
+ * @brief Sets the maximum velocity for the Profile Position Mode.
+ *
+ * This function sets the maximum velocity for the Profile Position Mode of the SCA motor.
+ * The maximum velocity is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param max_velocity Desired maximum velocity value in the unit of Profile_Scal.
+ *
+ * @return Returns OK if the command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_SetPPMaxcVelocity(Sca_t * sca, float max_velocity)
+{
+    if(sca == NULL)
+        return ERROR;
+    
+    uint8_t result = ERROR;
+    uint8_t err_t = 0;
+    max_velocity /= Profile_Scal;
+
+    result = SCA_Write_3(sca, W3_PPMaxVelocity, max_velocity);
+    if (result != OK)
+    {
+        log_e("PPMaxcVelocity 写速度失败 ");
+        return result;
+    }
+
+    SCA_GetPPMaxVelocity(sca);
+
+    return OK;
+}
+
 
 
 /*********************************Velocity******************************************** */
 
 /**
- * @brief set the motor velocity as Velocity_Target
- * @param ptSca 
- * @return 
+ * @brief Sets the target velocity for the SCA motor.
+ *
+ * This function sends a command to the SCA motor to set its target velocity.
+ * The target velocity is a float value representing the desired
+ * velocity in revolutions per minute (rpm).
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param velocity_target Desired target velocity in revolutions per minute (rpm).
+ *
+ * @return Returns OK if the command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_SetVelocity(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
     
-    return SCA_Write_3(sca->can, sca->id, W3_Velocity, sca->Velocity_Target);
+    return SCA_Write_3(sca, W3_Velocity, sca->Velocity_Target);
 }
 
 /**
- * @brief get the motor velocity
- * @param ptSca 
- * @return 
+ * @brief Retrieves the velocity of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its velocity.
+ * The velocity is a float value 
+ * velocity in revolutions per minute (rpm).
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command send successfully.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_GetVelocity(Sca_t * sca)
 {
@@ -265,61 +542,136 @@ uint8_t SCA_GetVelocity(Sca_t * sca)
 }
 
 /**
- * @brief set the acceleration and deceleration of the ProfileVelocityMode
- * @param ptSca 
- * @param acce acceleration
- * @param dece deceleration
- * @return 
+ * @brief Retrieves the acceleration limit for the Profile Velocity Mode of the SCA motor.
+ *
+ * This function reads the acceleration limit value from the SCA motor's Profile Velocity Mode.
+ * The acceleration limit is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns the acceleration limit value if successful.
+ *         Returns ERROR if the sca pointer is NULL.
  */
-uint8_t SCA_SetAcceDece(Sca_t * sca, float acce, float dece)
+uint8_t SCA_GetPVAcceleration(Sca_t * sca)
+{
+    if(sca == NULL)
+        return ERROR;
+    
+    return SCA_Read(sca->can, sca->id, R3_PVMaxAcceleration);
+}
+
+
+
+/**
+ * @brief Retrieves the deceleration limit for the Profile Velocity Mode of the SCA motor.
+ *
+ * This function reads the deceleration limit value from the SCA motor's Profile Velocity Mode.
+ * The deceleration limit is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns the deceleration limit value if successful.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_GetPVDeceleration(Sca_t * sca)
+{
+    if(sca == NULL)
+        return ERROR;
+    
+    return SCA_Read(sca->can, sca->id, R3_PVMaxDeceleration);
+}
+
+/**
+ * @brief Sets the acceleration for the Profile Velocity Mode.
+ *
+ * This function sets the acceleration value for the Profile Velocity Mode of the SCA motor.
+ * The acceleration value is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param acceleration Desired acceleration value in the unit of Profile_Scal.
+ *
+ * @return Returns OK if the acceleration value is successfully set.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_SetPVAcceleration(Sca_t * sca, float acceleration)
 {
     if(sca == NULL)
         return ERROR;
 
     uint8_t result = ERROR;
-    
-    result = SCA_Write_3(sca->can, sca->id, W3_PVMaxAcceleration, acce);
-    if (result == ERROR)
+    acceleration /= Profile_Scal;
+    result = SCA_Write_3(sca, W3_PVMaxAcceleration, acceleration);
+    if (result!= OK)
     {
+        log_e("PVAcceleration 写入失败 ");
         return result;
     }
-    return SCA_Write_3(sca->can, sca->id, W3_PVMaxDeceleration, dece);
+    SCA_GetPVAcceleration(sca);
+    return OK;
 }
 
+
 /**
- * @brief get the limit of the velocity
- * @param ptSca 
- * @return 
+ * @brief Sets the deceleration for the Profile Velocity Mode.
+ *
+ * This function sets the deceleration value for the Profile Velocity Mode of the SCA motor.
+ * The deceleration value is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param deceleration Desired deceleration value in the unit of Profile_Scal.
+ *
+ * @return Returns OK if the deceleration value is successfully set.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_SetPVDeceleration(Sca_t * sca, float deceleration)
+{
+    if (sca == NULL)
+        return ERROR;
+
+    uint8_t result = ERROR;
+    deceleration /= Profile_Scal;
+    result = SCA_Write_3(sca, W3_PVMaxDeceleration, deceleration); 
+    if (result!= OK)
+    {   
+        log_e("PVDeceleration 写入失败 ");
+        return result;
+    } 
+    SCA_GetPVDeceleration(sca);
+    return OK;
+}
+
+
+/**
+ * @brief Retrieves the velocity limit of the SCA motor.
+ *
+ * This function reads the velocity limit value from the SCA motor's
+ * internal registers and returns it.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns the velocity limit value if successful.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_GetVelocityLimit(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
-   
+
     return SCA_Read(sca->can, sca->id, R3_VelocityLimit);
 }
 
 /**
- * @brief set the max velocity of ProfileVelocityMode
- * @param sca 
- * @param maxVelocity max velocity of ProfileVelocityMode
- * @return 
+ * @brief Retrieves the maximum velocity limit for the Profile Velocity Mode of the SCA motor.
+ *
+ * This function reads the maximum velocity limit value from the SCA motor's Profile Velocity Mode.
+ * The maximum velocity limit is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns the maximum velocity limit value if successful.
+ *         Returns ERROR if the sca pointer is NULL.
  */
-uint8_t SCA_SetProfileVelocityMaxVelocity(Sca_t * sca, float maxVelocity)
-{
-    if(sca == NULL)
-        return ERROR;
-
-    maxVelocity /= Profile_Scal;
-    return  SCA_Write_3(sca->can, sca->id, W3_PVMaxVelocity, maxVelocity);
-}
-
-/**
- * @brief get the max velocity of ProfileVelocityMode
- * @param ptSca 
- * @return 
- */
-uint8_t SCA_GetProfileVelocityMaxVelocity(Sca_t * sca)
+uint8_t SCA_GetPVMaxVelocity(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
@@ -327,12 +679,54 @@ uint8_t SCA_GetProfileVelocityMaxVelocity(Sca_t * sca)
     return  SCA_Read(sca->can, sca->id, R3_PVMaxVelocity);
 }
 
-/*********************************currents******************************************** */
 
 /**
- * @brief set sca motor current as Current_Target
- * @param sca 
- * @return 
+ * @brief Sets the maximum velocity for the Profile Velocity Mode of the SCA motor.
+ *
+ * This function sets the maximum velocity for the Profile Velocity Mode of the SCA motor.
+ * The maximum velocity is scaled by dividing it by the Profile_Scal value.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param maxVelocity Desired maximum velocity value in the unit of Profile_Scal.
+ *
+ * @return Returns OK if the maximum velocity is successfully set.
+ *         Returns ERROR if the sca pointer is NULL.
+ *         If the write operation fails, it logs an error message and returns the error code.
+ */
+uint8_t SCA_SetPVMaxVelocity(Sca_t * sca, float maxVelocity)
+{
+    if(sca == NULL)
+        return ERROR;
+
+    maxVelocity /= Profile_Scal;
+    uint8_t result = ERROR;
+    result = SCA_Write_3(sca, W3_PVMaxVelocity, maxVelocity);
+    if (result!= OK)
+    {
+        log_e("PVMaxVelocity 写入失败 ");
+        return result;
+    }
+    SCA_GetPVMaxVelocity(sca);
+    return OK;
+}
+
+
+
+/*********************************currents******************************************** */
+
+
+/**
+ * @brief Sets the target current for the SCA motor.
+ *
+ * This function sends a command to the SCA motor to set its target current.
+ * The target current is a float value representing the desired
+ * current in amperes. The actual current output of the motor may not match the
+ * target current exactly due to internal control algorithms.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the write command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_SetCurrent(Sca_t* sca)
 {
@@ -341,29 +735,74 @@ uint8_t SCA_SetCurrent(Sca_t* sca)
         return ERROR;
     }
     
-	return SCA_Write_3(sca->can, sca->id, W3_Current, sca->Current_Target);
+    return SCA_Write_3(sca, W3_Current, sca->Current_Target);
+}
+
+
+/**
+ * @brief Retrieves the maximum current maximum range of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its maximum current range.
+ * The maximum current limit is a float value representing the maximum current in amperes.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the write command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_GetCurrentMaxRange(Sca_t* sca)
+{
+    if (sca == NULL)
+    {
+        return ERROR;
+    }
+    
+    return SCA_Read(sca->can, sca->id, R2_Current_Max);
+}
+
+uint8_t SCA_GetCurrentLimit(Sca_t* sca)
+{
+    if(sca == NULL)
+        return ERROR;
+    
+    return SCA_Read(sca->can, sca->id, R3_CurrentLimit);
+    
 }
 
 /*********************************others******************************************** */
 
 /**
- * @brief get current, velocity and position of the motor
- * @param ptSca 
- * @return 
+ * @brief Retrieves the CVP value from the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its CVP value.
+ * The CVP value represents the current, velocity and position value of the motor
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command send successfully.
+ *         Returns ERROR if the sca pointer is NULL.
+ *         
  */
 uint8_t SCA_GetCVP(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
 
-    
     return SCA_Read(sca->can, sca->id, R4_CVP);
 }
 
+
 /**
- * @brief get the pwoer supply of the motor
- * @param sca 
- * @return 
+ * @brief Retrieves the voltage of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its voltage.
+ * The voltage is a float value representing the voltage in volts.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command send successfully.
+ *         Returns ERROR if the sca pointer is NULL.
+ *         
  */
 uint8_t SCA_GetVoltage(Sca_t * sca)
 {
@@ -372,10 +811,18 @@ uint8_t SCA_GetVoltage(Sca_t * sca)
     return SCA_Read(sca->can, sca->id, R2_Voltage);
 }
 
+
 /**
- * @brief get the motor temperature
- * @param sca 
- * @return 
+ * @brief Retrieves the temperature of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to read its temperature.
+ * The temperature is a float value representing the temperature in degrees Celsius.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the command send successfully.
+ *         Returns ERROR if the sca pointer is NULL.
+ *         
  */
 uint8_t SCA_GetTemperature(Sca_t * sca)
 {
@@ -383,46 +830,100 @@ uint8_t SCA_GetTemperature(Sca_t * sca)
     {
         return ERROR;
     }
-	return  SCA_Read(sca->can, sca->id, R2_MotorTemp);
+    return  SCA_Read(sca->can, sca->id, R2_MotorTemp);
 }
 
+
 /**
- * @brief get the all information of sca controler
- * @param sca 
- * @return 
+ * @brief Retrieves all parameters from the SCA motor.
+ *
+ * This function sends commands to the SCA motor to retrieve various parameters
+ * such as serial number, temperature, voltage, mode, and profile velocity
+ * parameters. The function then waits for a short period before sending the
+ * next command to ensure that the data is ready.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if all commands are successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
+ *         
  */
-uint8_t SCA_GetAllInfomation(Sca_t * sca)
+uint8_t SCA_GetAllparameters(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
 
     SCA_GetSerialNumbe(sca);
-    SCA_GetProfileVelocityMaxVelocity(sca);
     vTaskDelay(10);
     SCA_GetTemperature(sca);
-    vTaskDelay(10);
-    SCA_GetVelocityLimit(sca);
     vTaskDelay(10);
     SCA_GetVoltage(sca);
     vTaskDelay(10);
     SCA_GetMode(sca);
     vTaskDelay(10);
+    SCA_GetPPAcceleration(sca);
+    vTaskDelay(10);
+    SCA_GetPPDeceleration(sca);
+    vTaskDelay(10);
+    SCA_GetPPMaxVelocity(sca);
+    vTaskDelay(10);
+    SCA_GetPVAcceleration(sca);
+    vTaskDelay(10);
+    SCA_GetPVDeceleration(sca);
+    vTaskDelay(10);
+    SCA_GetPVMaxVelocity(sca);
+    vTaskDelay(10);
+    SCA_GetVelocityLimit(sca);
+    vTaskDelay(10);
+    SCA_GetCurrentMaxRange(sca);
+    vTaskDelay(10);
+    SCA_GetCurrentLimit(sca);
     return OK;
 }
+
+
+
+
+/**
+ * @brief Saves all parameters of the SCA motor.
+ *
+ * This function sends a command to the SCA motor to save all its parameters.
+ * The parameters are saved to non-volatile memory, so they will remain after
+ * a power cycle.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the save command is successfully sent.
+ *         Returns ERROR if the sca pointer is NULL.
+ */
+uint8_t SCA_SaveAllParamters(Sca_t * sca)
+{
+    if(sca == NULL)
+        return ERROR;
+    
+    return SCA_Write_4(sca->can, sca->id, W4_Save);
+}
+
+
 /****************************data process*******************************/
 
 
 /**
- * @brief process information returned by the controller
- * @param ptSca 
- * @return 
+ * @brief Processes the received data from the SCA motor.
+ *
+ * This function checks the first byte of the received data to determine the type of data,
+ * and then calls the appropriate data processing function to handle the data.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ *
+ * @return Returns OK if the function completes successfully.
+ *         Returns ERROR if the sca pointer is NULL.
  */
 uint8_t SCA_DataProcess(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
 
-    
 	switch(sca->can->rx_data[0])
 	{
 		case R1_Heartbeat:
@@ -431,15 +932,16 @@ uint8_t SCA_DataProcess(Sca_t * sca)
 		case R1_PowerState:
 			R1dataProcess(sca);
 		    break;
-		
+
 		case R2_Voltage:
 		case R2_MotorTemp:
 		case R2_MotorProtectTemp:
 		case R2_MotorRecoverTemp:
+        case R2_Current_Max:
 		case R2_Error:
             R2dataProcess(sca);
 		    break;
-		
+
 		case R3_Current:
 		case R3_Velocity:	
 		case R3_Position:	
@@ -458,21 +960,22 @@ uint8_t SCA_DataProcess(Sca_t * sca)
 			R3dataProcess(sca);
             sca->Angle_Real = (sca->Position_Real) * 360.0f;
 		    break;
-		
+
 		case R4_CVP:
 			R4dataProcess(sca);
             sca->Angle_Real = (sca->Position_Real) * 360.0f;
 		    break;
-		
+
 		case R5_ShakeHands:
 			R5dataProcess(sca);
 		    break;
-        
+
 		default:
 			break;
 	}
     return 0;
 }
+
 
 
 /**
@@ -489,17 +992,30 @@ uint8_t ScaInit(Sca_t* sca, uint8_t id, uint8_t mode, Can_t* can)
     if(sca == NULL || can == NULL)
         return ERROR;
 
+    uint8_t err_t = 0;
     sca->id = id;
     sca->Mode_Target = mode;
     sca->Mode = 0x00;
     sca->can = can;
     sca->Online_State = 1;
     sca->Power_State = 0;
+    sca->Current_MaxRange = 0;
 
     SCA_Enable(sca);
     SCA_GetState(sca);
     vTaskDelay(10);
     SCA_SetMode(sca, sca->Mode_Target);
+    while (sca->Current_MaxRange == 0)
+    {
+        err_t++;
+        SCA_GetCurrentMaxRange(sca);
+        if (err_t >= 20)
+        {
+            log_e("电流量程获取失败 ");
+            return ERROR;
+        }
+        vTaskDelay(100);
+    }
     return OK;
 }
 
@@ -534,18 +1050,25 @@ char* find_name_of_mode(uint8_t index)
 
 void show_sca_t(void)
 {
-    SCA_GetAllInfomation(&scaMotor[0]);
+    SCA_GetAllparameters(&scaMotor[0]);
     vTaskDelay(5);
     log_v("work mode:\t\t%s", find_name_of_mode(scaMotor[0].Mode));
     log_v("target current:\t\t%.2f", scaMotor[0].Current_Target);
-    log_v("target velocity:\t%.2fRPM", scaMotor[0].Velocity_Target);
+    log_v("target velocity:\t%.2frpm", scaMotor[0].Velocity_Target);
     log_v("target position:\t%.2fR", scaMotor[0].Position_Target);
-    log_v("real current:\t\t%.2f", scaMotor[0].Current_Real);
-    log_v("real velocity:\t\t%.2fRPM", scaMotor[0].Velocity_Real);
+    log_v("real current:\t\t%.2fA", scaMotor[0].Current_Real);
+    log_v("real velocity:\t\t%.2frpm", scaMotor[0].Velocity_Real);
     log_v("real position:\t\t%.2fR", scaMotor[0].Position_Real);
     log_v("serial numbe:\t\t%02x %02x %02x %02x %02x %02x", scaMotor[0].Serial_Num[0], scaMotor[0].Serial_Num[1],scaMotor[0].Serial_Num[2],scaMotor[0].Serial_Num[3],scaMotor[0].Serial_Num[4], scaMotor[0].Serial_Num[5]);
     log_v("power voltage:\t\t%.2fV", scaMotor[0].Voltage);
     log_v("velocity limit:\t\t%.2fRPM", scaMotor[0].Velocity_Limit);
     log_v("motor temperture:\t%.2f°C", scaMotor[0].Motor_Temp);
-
+    log_v("pp acceleration:\t%.2f", scaMotor[0].PP_Max_Acceleration);
+    log_v("pp deceleration:\t%.2f", scaMotor[0].PP_Max_Deceleration);
+    log_v("pp max velocity:\t%.2fRPM", scaMotor[0].PP_Max_Velocity);
+    log_v("pv acceleration:\t%.2f", scaMotor[0].PV_Max_Acceleration);
+    log_v("pv deceleration:\t%.2f", scaMotor[0].PV_Max_Deceleration);
+    log_v("pv max velocity:\t%.2fRPM", scaMotor[0].PV_Max_Velocity);
+    log_v("max current range:\t%.2fA", scaMotor[0].Current_MaxRange);
+    log_v("limit current:\t\t%.2fA", scaMotor[0].Current_Limit);
 }
