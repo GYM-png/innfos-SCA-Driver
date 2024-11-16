@@ -1,0 +1,16 @@
+sca_driver\sample-cli-commands.o: ..\UserCode\FreeRTOS_CLI\Sample-CLI-commands.c
+sca_driver\sample-cli-commands.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+sca_driver\sample-cli-commands.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
+sca_driver\sample-cli-commands.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+sca_driver\sample-cli-commands.o: ../Core/Inc/FreeRTOSConfig.h
+sca_driver\sample-cli-commands.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+sca_driver\sample-cli-commands.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+sca_driver\sample-cli-commands.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+sca_driver\sample-cli-commands.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
+sca_driver\sample-cli-commands.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+sca_driver\sample-cli-commands.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+sca_driver\sample-cli-commands.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
+sca_driver\sample-cli-commands.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdio.h
+sca_driver\sample-cli-commands.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdlib.h
+sca_driver\sample-cli-commands.o: D:\keil5\ARM\ARMCC\Bin\..\include\string.h
+sca_driver\sample-cli-commands.o: ..\UserCode\FreeRTOS_CLI\FreeRTOS_CLI.h

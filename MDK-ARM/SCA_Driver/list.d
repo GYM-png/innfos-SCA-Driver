@@ -1,0 +1,12 @@
+sca_driver\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/list.c
+sca_driver\list.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdlib.h
+sca_driver\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+sca_driver\list.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
+sca_driver\list.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+sca_driver\list.o: ../Core/Inc/FreeRTOSConfig.h
+sca_driver\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+sca_driver\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+sca_driver\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+sca_driver\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
+sca_driver\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+sca_driver\list.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h

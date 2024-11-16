@@ -1,0 +1,13 @@
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c
+sca_driver\heap_4.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdlib.h
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
+sca_driver\heap_4.o: D:\keil5\ARM\ARMCC\Bin\..\include\stddef.h
+sca_driver\heap_4.o: D:\keil5\ARM\ARMCC\Bin\..\include\stdint.h
+sca_driver\heap_4.o: ../Core/Inc/FreeRTOSConfig.h
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/portmacro.h
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h
+sca_driver\heap_4.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h
