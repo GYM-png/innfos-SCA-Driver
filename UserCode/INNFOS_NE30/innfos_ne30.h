@@ -80,8 +80,9 @@ typedef struct
 	float Motor_Protect_Temp;		//电机保护温度
 	float Motor_Recover_Temp;		//电机恢复温度
 	float Current_MaxRange;			//电流满量程 (A) 电流环使用(初始化获取，只和电机有关，不能改变)
-	sca_errcode_t * ptErrcode;	    //电机报警信息
-
+	// sca_errcode_t * ptErrcode;	    //电机报警信息
+    uint16_t Error_Code;			//错误代码
+	
 	/* 第三类数据变量 */
 	float Current_Real;				//当前电流 (单位：A）
 	float Velocity_Real;			//当前速度 (单位：RPM）
@@ -115,6 +116,7 @@ int8_t SCA_GetMode(Sca_t * sca);
 uint8_t SCA_GetSerialNumbe(Sca_t * sca);
 uint8_t SCA_SetID(Sca_t * sca, uint8_t id);
 
+
 uint8_t SCA_SetPosition(Sca_t * sca);
 uint8_t SCA_SetAngle(Sca_t * sca);
 uint8_t SCA_GetPosition(Sca_t * sca);
@@ -126,6 +128,7 @@ uint8_t SCa_SetPPDeceleration(Sca_t * sca, float dece);
 uint8_t SCA_GetPPMaxVelocity(Sca_t * sca);
 uint8_t SCA_SetPPMaxcVelocity(Sca_t * sca, float max_velocity);
 
+
 uint8_t SCA_SetVelocity(Sca_t * sca);
 uint8_t SCA_GetVelocity(Sca_t * sca);
 uint8_t SCA_GetPVAcceleration(Sca_t * sca);
@@ -136,21 +139,26 @@ uint8_t SCA_GetVelocityLimit(Sca_t * sca);
 uint8_t SCA_GetPVMaxVelocity(Sca_t * sca);
 uint8_t SCA_SetPVMaxVelocity(Sca_t * sca, float maxVelocity);
 
+
 uint8_t SCA_SetCurrent(Sca_t* sca);
 uint8_t SCA_GetCurrentMaxRange(Sca_t* sca);
 uint8_t SCA_GetCurrentLimit(Sca_t* sca);
 
+
+uint8_t SCA_GetErrorCode(Sca_t* sca);
 uint8_t SCA_GetCVP(Sca_t * sca);
 uint8_t SCA_GetVoltage(Sca_t * sca);
 uint8_t SCA_GetTemperature(Sca_t * sca);
 uint8_t SCA_GetAllparameters(Sca_t * sca);
 uint8_t SCA_SaveAllParamters(Sca_t * sca);
 
+
 uint8_t SCA_DataProcess(Sca_t * sca);
 
 
 /************************************user code************************************************************* */
 char* find_name_of_mode(uint8_t index);
+char * find_name_of_error(uint8_t index);
 
 
 #endif //INNFOS_NE30_INNFOS_NE30_H

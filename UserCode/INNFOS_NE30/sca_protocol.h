@@ -19,7 +19,7 @@
 
 //第二类读取指令
 #define R2_Voltage				0x45        //查询执行器电压(数据为真实值的2^10倍)
-#define R2_Current_Max			0x53
+#define R2_Current_Max			0x53        //查询最大电流量程
 #define R2_MotorTemp			0x5F        //查询电机温度
 #define R2_MotorProtectTemp		0x6C        //查询电机保护温度
 #define R2_MotorRecoverTemp		0x6E        //查询电机恢复温度

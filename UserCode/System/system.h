@@ -12,6 +12,7 @@
 #include "cmd.h"
 
 void debug_init(void);
+void system_reset_soft(const char* tag, ...);
 
 
 #endif

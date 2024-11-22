@@ -55,60 +55,156 @@ void sca_task_init(void)
     xTimerStart(SCA_TIMER, 0);
 }
 
+static void motor_init(void)
+{
+    static uint8_t err_t[MOTOR_NUM] = {0};
+
+    /* 电机1初始化 */
+    while (motor[0].Power_State != 1)
+    {
+        err_t[0]++;
+        SCA_Enable(&motor[0]);
+        SCA_GetState(&motor[0]);
+        vTaskDelay(500);
+        if (err_t[0] >= 5){//3s后报警一次
+            log_e("sca %d is not online", motor[0].id);
+            return;
+        }
+    }
+    log_i("sca%d power on and work in %s", motor[0].id, find_name_of_mode(motor[0].Mode));
+    SCA_SetMode(&motor[0], SCA_Profile_Velocity_Mode);
+    SCA_GetAllparameters(&motor[0]);
+
+    /* 电机2初始化 */
+    while (motor[1].Power_State != 1)
+    {
+        err_t[1]++;
+        SCA_Enable(&motor[1]);
+        SCA_GetState(&motor[1]);
+        vTaskDelay(500);
+        if (err_t[1] >= 5){//3s后报警一次
+            log_e("sca %d is not online", motor[1].id);
+            return;
+        }
+    }
+    log_i("sca%d power on and work in %s", motor[1].id, find_name_of_mode(motor[1].Mode));
+    SCA_SetMode(&motor[1], SCA_Profile_Velocity_Mode);
+    SCA_SetPPMaxcVelocity(&motor[1], 30);
+    SCA_GetAllparameters(&motor[1]);
+}
+
+/**
+ * @brief 切换到期望模式
+ * @param sca 
+ */
+static void motor_mode_update(Sca_t * sca)
+{
+    if(sca->Mode_Target != sca->Mode)
+    {
+        SCA_SetMode(sca, sca->Mode_Target);
+    }
+}
+
+/**
+ * @brief 根据当前模式进行控制
+ * @param sca 
+ */
+static void motor_control_update(Sca_t * sca)
+{
+    switch ( sca->Mode)
+    {
+    case SCA_Current_Mode:
+        SCA_SetCurrent(sca);
+        break;
+    case SCA_Profile_Position_Mode:
+        SCA_SetPosition(sca);
+        break;
+    case SCA_Profile_Velocity_Mode:
+        SCA_SetVelocity(sca);
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+ * @brief 单个电机停止
+ * @param sca 
+ */
+static void motor_stop(Sca_t * sca)
+{
+    SCA_Disable(sca);
+}
+
+/**
+ * @brief 所有电机停止
+ */
+static void motor_stop_all(void)
+{
+    for (uint8_t i = 0; i < MOTOR_NUM; i++)
+    {
+        SCA_Disable(&motor[i]);
+    }
+}
+
+/**
+ * @brief 电机掉线检查
+ * @param  
+ */
+static void motor_online_check(void)
+{
+    static uint8_t err_t[MOTOR_NUM] = {0};
+    for (uint8_t i = 0; i < MOTOR_NUM; i++)
+    {
+        if (motor[i].Online_State == 0){
+            err_t[i]++;
+        }
+        else{
+            err_t[i] = 0; 
+            motor[i].Online_State = 0;//重置心跳
+            SCA_HeartBeat(&motor[i]);//获取心跳
+        }
+
+        if (err_t[i] >= 3){
+            log_e("sca%d is not online", &motor[i].id);
+            motor_stop_all();
+            system_reset_soft("motor %d is not online", &motor[i].id);
+        }       
+    }
+}
+
+static void motor_error_check(void)
+{
+    for (uint8_t i = 0; i < MOTOR_NUM; i++)
+    {
+        SCA_GetErrorCode(&motor[i]);
+        // for (uint8_t i = 0; i < 12; i++){
+        //     if(motor[i].ptErrcode->Error_Code & (0x01 << i)){
+        //         log_e("motor %d :%s", motor[i].id, find_name_of_error(i));
+        //     }
+        // }
+        log_i("motor %d err: %x", motor[i].id, motor[i].Error_Code);
+    }
+}
+
 /**
  * @brief sca control task function
  * @param pvparameters 
  */
 static void sca_control_task(void * pvparameters)
 {
-    ScaInit(&motor[0], Lite_NE30_36, 0X15, SCA_Profile_Velocity_Mode, &fdcan1);
-    log_i("SCA Task Work! ");
-    uint8_t last_mod = SCA_Profile_Velocity_Mode;
-    
-    for(;;)//上电检测
-    {
-        static uint8_t err_t = 0;
-        err_t++;
-        vTaskDelay(1000);
-        SCA_Enable(&motor[0]);
-        SCA_GetState(&motor[0]);
-        if (err_t == 3)//3s后报警一次
-        {
-            log_e("sca%d is not online", motor[0].id);
-        }
-        if (motor[0].Power_State == 0)
-            continue;
-        else
-        {
-            log_i("sca%d power on and work in %s", motor[0].id, find_name_of_mode(motor[0].Mode));
-            SCA_SetMode(&motor[0], SCA_Profile_Velocity_Mode);
-            SCA_SetPPMaxcVelocity(&motor[0], 20);
-            SCA_GetAllparameters(&motor[0]);
-            break;
-        }
-    }    
+    ScaInit(&motor[0], Lite_NE30_36, 0X15, SCA_Profile_Velocity_Mode, &fdcan1);//sca 句柄初始化
+    ScaInit(&motor[1], NE30,         0x01, SCA_Profile_Velocity_Mode, &fdcan1);
+    motor_init();//电机初始化
+    log_i("SCA Task Work! ");  
     for(;;)
     {       
-        if (motor[0].Mode_Target!= motor[1].Mode)
-        {
-            SCA_SetMode(&motor[0], motor[0].Mode_Target);
-        }
-
-        switch (motor[0].Mode)
-        {
-        case SCA_Current_Mode:
-            SCA_SetCurrent(&motor[0]);
-            break;
-        case SCA_Profile_Position_Mode:
-            SCA_SetPosition(&motor[0]);
-            break;
-        case SCA_Profile_Velocity_Mode:
-            SCA_SetVelocity(&motor[0]);
-            break;
-        default:
-            break;
-        }
+        motor_mode_update(&motor[0]);//先切换到正确模式
+        motor_mode_update(&motor[1]);
+        motor_control_update(&motor[0]);//根据模式执行控制
+        motor_control_update(&motor[1]);
         SCA_GetCVP(&motor[0]);
+        SCA_GetCVP(&motor[1]);
         vTaskDelay(10);
     }
 }
@@ -122,15 +218,15 @@ void sca_data_process_task(void *pvparameters)
     for(;;)
     {
         xSemaphoreTake(fdcan1.rx_sema, portMAX_DELAY);
-        switch (fdcan1.rx_header_t->Identifier)
+        for (uint8_t i = 0; i < MOTOR_NUM; i++)
         {
-        case 0x015:
-            SCA_DataProcess(&motor[0]);
-            break;
-        
-        default:
-            break;
+            if(fdcan1.rx_header_t->Identifier == motor[i].id)
+            {
+                SCA_DataProcess(&motor[i]);
+                break;
+            }
         }
+        
     }
 }
 
@@ -140,19 +236,6 @@ void sca_data_process_task(void *pvparameters)
  */
 void sca_tim_callback(TimerHandle_t xTimer)
 {
-    static uint8_t err_t = 0;
-    if (motor[0].Online_State == 0)
-        err_t++;
-    else
-    {
-        err_t = 0; 
-        motor[0].Online_State = 0;
-        SCA_HeartBeat(&motor[0]);
-    }
-
-    if (err_t >= 3)
-    {
-        log_e("sca%d is not online", &motor[0].id);
-        xTimerStop(SCA_TIMER, 0);
-    }   
+    motor_online_check();  
+    // motor_error_check();
 }

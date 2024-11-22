@@ -48,7 +48,7 @@ static const CLI_Command_Definition_t user_command[] = {
     .pcCommand = "get",\
     .pcHelpString = "get:\t\t-t:get time; -vcp:get sca parameters\r\n", \
     .pxCommandInterpreter = get_command, \
-    .cExpectedNumberOfParameters = 1},
+    .cExpectedNumberOfParameters = 2},
     {
     .pcCommand = "set",\
     .pcHelpString = "set:\t\t-v:set velocity; -p:set position; -c:set current; -m:set mode\r\n", \
@@ -113,7 +113,7 @@ static UBaseType_t uxParameterNumber = 1;   //总参数量
 
 static BaseType_t get_command( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
 {
-static UBaseType_t uxParameterNumber = 1;   //总参数量
+static UBaseType_t uxParameterNumber = 2;   //总参数量
 	( void ) pcCommandString;
 	( void ) xWriteBufferLen;
 	configASSERT( pcWriteBuffer );
@@ -130,7 +130,7 @@ static UBaseType_t uxParameterNumber = 1;   //总参数量
         log_i("没有找到参数 \r\n");
         return pdFALSE;
     }
-    log_i("%s  %s\r\n", parameterArray[0]);
+    
     if (strstr(parameterArray[0], "t"))
     {
         log_v("当前系统时间:\r\n");
@@ -138,16 +138,28 @@ static UBaseType_t uxParameterNumber = 1;   //总参数量
     }
     else if (strstr(parameterArray[0], "vcp"))
     {
+        int index = atoi(parameterArray[1]);//第二个参数转换为下标
+        if(index >  MOTOR_NUM || index <= 0)
+        {
+            log_w("参数超出范围 \r\n");
+            return pdFALSE;
+        }
         log_v("SCA参数:");
-        log_v("velocity:\t%.2frpm", motor[0].Velocity_Real);
-        log_v("position:\t%.2fR ", motor[0].Position_Real);
-        log_v("angle:\t\t%.2f° ", motor[0].Angle_Real);
-        log_v("current:\t%.2f", motor[0].Current_Real);
+        log_v("velocity:\t%.2frpm", motor[index - 1].Velocity_Real);
+        log_v("position:\t%.2fR ",  motor[index - 1].Position_Real);
+        log_v("angle:\t\t%.2f° ",   motor[index - 1].Angle_Real);
+        log_v("current:\t%.2f",     motor[index - 1].Current_Real);
     }
     else if (strstr(parameterArray[0], "s"))
     {
-        extern void show_sca_t(void);
-        show_sca_t();
+        int index = atoi(parameterArray[1]);//第二个参数转换为下标
+        if(index >  MOTOR_NUM || index <= 0)
+        {
+            log_w("参数超出范围 \r\n");
+            return pdFALSE;
+        }
+        extern void show_sca_t(uint8_t index);
+        show_sca_t(index - 1);
     }
     
     
@@ -174,37 +186,50 @@ static UBaseType_t uxParameterNumber = 2;   //总参数量
         log_i("没有找到参数 \r\n");
         return pdFALSE;
     }
-    log_i("%s  %s\r\n", parameterArray[0], parameterArray[1]);
-    if (strstr(parameterArray[0], "v"))
-    {
-        if (motor[0].Mode != SCA_Profile_Velocity_Mode)
-        {
-            log_w("请先切换到速度模式 \r\n");
+
+    if (strstr(parameterArray[0], "v1")){
+        if (motor[0].Mode != SCA_Profile_Velocity_Mode){
+            log_w("请先切换到速度模式 ");
             return pdFALSE;
         }
         motor[0].Velocity_Target = atof(parameterArray[1]);
     }
-    else if (strstr(parameterArray[0], "p"))
-    {
-        if (motor[0].Mode != SCA_Profile_Position_Mode)
-        {
-            log_w("请先切换到位置模式 \r\n");
+    else if (strstr(parameterArray[0], "v2")){
+        if(motor[1].Mode != SCA_Profile_Velocity_Mode){
+            log_w("请先切换到速度模式 ");
             return pdFALSE;
         }
-        
+        motor[1].Velocity_Target = atof(parameterArray[1]);
+    }
+    else if (strstr(parameterArray[0], "p1")){
+        if (motor[0].Mode != SCA_Profile_Position_Mode){
+            log_w("请先切换到位置模式 ");
+            return pdFALSE;
+        }
         motor[0].Position_Target = atof(parameterArray[1]);
     }
-    else if (strstr(parameterArray[0], "c"))
-    {
-        if(motor[0].Mode!= SCA_Current_Mode)
-        {
-            log_w("请先切换到电流模式 \r\n");
+    else if (strstr(parameterArray[0], "p2")){
+        if(motor[1].Mode!= SCA_Profile_Position_Mode){
+            log_w("请先切换到位置模式 ");
+            return pdFALSE;
+        }
+        motor[1].Position_Target = atof(parameterArray[1]);
+    }
+    else if (strstr(parameterArray[0], "c1")){
+        if(motor[0].Mode!= SCA_Current_Mode){
+            log_w("请先切换到电流模式 ");
             return pdFALSE;
         }
         motor[0].Current_Target = atof(parameterArray[1]);
     }
-    else if (strstr(parameterArray[0], "m"))
-    {
+    else if (strstr(parameterArray[0], "c2")){
+        if(motor[1].Mode!= SCA_Current_Mode){
+            log_w("请先切换到电流模式 ");
+            return pdFALSE;
+        }
+        motor[1].Current_Target = atof(parameterArray[1]);
+    }
+    else if (strstr(parameterArray[0], "m1")){
         if (strstr(parameterArray[1], "v"))
             motor[0].Mode_Target =  SCA_Profile_Velocity_Mode;
         else if (strstr(parameterArray[1], "p"))
@@ -212,7 +237,14 @@ static UBaseType_t uxParameterNumber = 2;   //总参数量
         else if(strstr(parameterArray[1], "c"))
             motor[0].Mode_Target =  SCA_Current_Mode;
     }
-    
+    else if (strstr(parameterArray[0], "m2")){
+        if (strstr(parameterArray[1], "v"))
+            motor[1].Mode_Target =  SCA_Profile_Velocity_Mode;
+        else if (strstr(parameterArray[1], "p"))
+            motor[1].Mode_Target =  SCA_Profile_Position_Mode;
+        else if(strstr(parameterArray[1], "c"))
+            motor[1].Mode_Target =  SCA_Current_Mode;
+    }
 	return pdFALSE;
 }
 

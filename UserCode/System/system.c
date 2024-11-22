@@ -1,17 +1,9 @@
-/*
- * @Author: GYM-png 480609450@qq.com
- * @Date: 2024-10-15 20:15:30
- * @LastEditors: GYM-png 480609450@qq.com
- * @LastEditTime: 2024-10-25 22:16:09
- * @FilePath: \MDK-ARMd:\warehouse\CmdDebug\CmdDebug\UserCode\System\system.c
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
-
 #include "system.h"
 #include "myusart.h"
 #include "dma.h"
 #include "config.h"
 #include "FreeRTOS_CLI.h"
+#include <stdarg.h> // 引入可变参数头文件
 
 extern void vRegisterSampleCLICommands( void );
 extern void vUARTCommandConsoleStart( uint16_t usStackSize, UBaseType_t uxPriority );
@@ -32,4 +24,20 @@ void debug_init(void)
     log_init();
 }
 
+static char tag_buffer[128] = {0}; // 定义一个128字节的字符数组来存储tag的输出
 
+/**
+ * @brief 软件重启
+ * @param tag 重启前输出的tag
+ */
+void system_reset_soft(const char* tag, ...)
+{
+    
+    va_list args; // 创建一个va_list类型的变量，用来存储可变参数
+    va_start(args, tag); // 使用va_start宏初始化args，使之指向第一个可选参数
+    vsnprintf(tag_buffer, sizeof(tag_buffer), tag, args); // 使用vsnprintf处理可变参数列表
+    va_end(args); // 使args不再指向可变参数列表中的任何参数
+    log_e("系统即将重启 tag:%s", tag_buffer);
+    vTaskDelay(10);
+    NVIC_SystemReset(); // 重启
+}

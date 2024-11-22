@@ -191,8 +191,9 @@ void R2dataProcess(Sca_t * sca)
 		    sca->Current_MaxRange = RxData;
 		
 		case R2_Error:
-			sca->ptErrcode->Error_Code = (uint16_t)RxData;
-			warnBitAnaly(sca->ptErrcode);
+			sca->Error_Code = (uint16_t)RxData;
+			// sca->ptErrcode->Error_Code = (uint16_t)RxData;
+			// warnBitAnaly(sca->ptErrcode);
 			break;
 
 		default:
