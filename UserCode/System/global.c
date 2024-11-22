@@ -14,7 +14,7 @@ Rtc_Date_t rtc_date =  {0, 0, 0};
 uint32_t systern_run_time = 0;
 uint16_t rtc_ms = 0;//系统时间ms rtc只能提供精确到s
 
-Sca_t scaMotor[MOTOR_NUM];
+Sca_t motor[MOTOR_NUM];
 Can_t fdcan1;
 
 Sca_Targte_t sca_target = {

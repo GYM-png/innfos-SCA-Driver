@@ -103,7 +103,7 @@
 
 
 //变量缩放值定义
-#define Velocity_Max	6000.0f			//速度最大值，固定为6000RPM（仅作为换算用）
+// #define Velocity_Max	6000.0f			//速度最大值，固定为6000RPM（仅作为换算用）
 #define BlkEngy_Scal	75.225f			//堵转能量缩放值
 #define Profile_Scal	960.0f			//梯形参数缩放值
 #define IQ8				256.0f			//2^8

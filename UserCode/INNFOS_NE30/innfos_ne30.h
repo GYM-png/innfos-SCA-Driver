@@ -37,6 +37,14 @@ typedef struct
 #define  SCA_Profile_Velocity_Mode	    0X07
 #define  SCA_Homing_Mode				0X08
 
+/**
+ * @brief SCA 电机型号
+ */
+typedef enum
+{
+	NE30 = 0, 			//
+	Lite_NE30_36 = 1, 	//
+}sca_model_e;
 
 /**
  * @brief 执行器的各种参数信息
@@ -47,6 +55,11 @@ typedef struct
     uint8_t Serial_Num[6];			//序列号
     Can_t * can;                    //can驱动
     uint32_t id;                    //id
+
+	/* 不同电机的参数 */
+	sca_model_e model;				//电机型号
+	float ReductionRatio; 			//减速比					
+	float Velocity_MaxRange; 		//转速满量程 (RPM) 速度环使用(初始化赋值，只和电机有关，不能改变)
 
 	/* 目标值 */
 	float Current_Target;			//目标电流 (单位：A）
@@ -66,7 +79,7 @@ typedef struct
 	float Motor_Temp;				//电机温度
 	float Motor_Protect_Temp;		//电机保护温度
 	float Motor_Recover_Temp;		//电机恢复温度
-	float Current_MaxRange;			//电流满量程 (A) 电流环使用
+	float Current_MaxRange;			//电流满量程 (A) 电流环使用(初始化获取，只和电机有关，不能改变)
 	sca_errcode_t * ptErrcode;	    //电机报警信息
 
 	/* 第三类数据变量 */
@@ -92,7 +105,7 @@ typedef struct
 
 }Sca_t;
 
-uint8_t ScaInit(Sca_t* sca, uint8_t id, uint8_t mode, Can_t* can);
+uint8_t ScaInit(Sca_t* sca, sca_model_e model, uint8_t id, uint8_t workmode, Can_t* can);
 uint8_t SCA_Enable(Sca_t * sca);
 uint8_t SCA_Disable(Sca_t * sca);
 uint8_t SCA_GetState(Sca_t * sca);

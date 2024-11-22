@@ -49,7 +49,7 @@ uint8_t SCA_Write_3(Sca_t * sca, uint8_t cmd, float TxData)
     /*	速度与电流在设定时，要采用标值，
         即设定值除以该参数的最大值，再转换为IQ24格式	*/
     if((cmd == W3_Velocity)||(cmd == W3_VelocityLimit))
-        temp = TxData / Velocity_Max * IQ24;
+        temp = TxData / sca->Velocity_MaxRange * IQ24;
     else if((cmd == W3_Current)||(cmd == W3_CurrentLimit))
         temp = TxData / sca->Current_MaxRange * IQ24;
     else if(cmd == W3_BlockEngy)
@@ -219,7 +219,7 @@ void R3dataProcess(Sca_t * sca)
 
 	/* 速度和电流使用标值，需要将转换值乘以该参数的最大值得到实际值 */
 	if((sca->can->rx_data[0] == R3_Velocity)||(sca->can->rx_data[0] == R3_VelocityLimit))
-		RxData = (float)temp / IQ24 * Velocity_Max; 
+		RxData = (float)temp / IQ24 * sca->Velocity_MaxRange; 
 	
 	else if((sca->can->rx_data[0] == R3_Current)||(sca->can->rx_data[0] == R3_CurrentLimit))
 		RxData = (float)temp / IQ24 * sca->Current_MaxRange; 
@@ -237,35 +237,35 @@ void R3dataProcess(Sca_t * sca)
 			break;
 		
 		case R3_Velocity:	
-			sca->Velocity_Real = RxData;
+			sca->Velocity_Real = RxData / sca->ReductionRatio;
 			break;
 		
 		case R3_Position:	
-			sca->Position_Real = RxData;
+			sca->Position_Real = RxData / sca->ReductionRatio;
 			break;
 				
 		case R3_PPMaxVelocity:
-			sca->PP_Max_Velocity = RxData * Profile_Scal;
+			sca->PP_Max_Velocity = RxData * Profile_Scal / sca->ReductionRatio;
 			break;
 		
 		case R3_PPMaxAcceleration:
-			sca->PP_Max_Acceleration = RxData * Profile_Scal;
+			sca->PP_Max_Acceleration = RxData * Profile_Scal / sca->ReductionRatio;
 			break;
 		
 		case R3_PPMaxDeceleration:
-			sca->PP_Max_Deceleration = RxData * Profile_Scal;
+			sca->PP_Max_Deceleration = RxData * Profile_Scal / sca->ReductionRatio;
 			break;
 		
 		case R3_PVMaxVelocity:
-			sca->PV_Max_Velocity = RxData * Profile_Scal;
+			sca->PV_Max_Velocity = RxData * Profile_Scal / sca->ReductionRatio;
 			break;
 		
 		case R3_PVMaxAcceleration:
-			sca->PV_Max_Acceleration = RxData * Profile_Scal;
+			sca->PV_Max_Acceleration = RxData * Profile_Scal / sca->ReductionRatio;
 			break;
 		
 		case R3_PVMaxDeceleration:
-			sca->PV_Max_Deceleration = RxData * Profile_Scal;
+			sca->PV_Max_Deceleration = RxData * Profile_Scal / sca->ReductionRatio;
 			break;
 				
 		case R3_CurrentLimit:	
@@ -273,19 +273,19 @@ void R3dataProcess(Sca_t * sca)
 			break;
 		
 		case R3_VelocityLimit:
-			sca->Velocity_Limit = RxData;
+			sca->Velocity_Limit = RxData / sca->ReductionRatio;
 			break;
 		
 		case R3_PositionLimitH:
-			sca->Position_Limit_H = RxData;
+			sca->Position_Limit_H = RxData / sca->ReductionRatio;
 			break;
 		
 		case R3_PositionLimitL:
-			sca->Position_Limit_L = RxData;
+			sca->Position_Limit_L = RxData / sca->ReductionRatio;
 			break;
 		
 		case R3_PositionOffset:
-			sca->Position_Offset = RxData;
+			sca->Position_Offset = RxData / sca->ReductionRatio;
 			break;
 				
 		case R3_BlockEngy:
@@ -315,11 +315,11 @@ void R4dataProcess(Sca_t * sca)
 	temp  = ((int32_t)sca->can->rx_data[1])<<24;
 	temp |= ((int32_t)sca->can->rx_data[2])<<16;
 	temp |= ((int32_t)sca->can->rx_data[3])<<8;
-	sca->Position_Real = (float)temp / IQ24;
+	sca->Position_Real = (float)temp / IQ24  / sca->ReductionRatio;
 
 	temp  = ((int32_t)sca->can->rx_data[4])<<24;
 	temp |= ((int32_t)sca->can->rx_data[5])<<16;
-	sca->Velocity_Real = (float)temp / IQ30 * Velocity_Max;
+	sca->Velocity_Real = (float)temp / IQ30 * sca->Velocity_MaxRange  / sca->ReductionRatio;
 
 	temp  = ((int32_t)sca->can->rx_data[6])<<24;
 	temp |= ((int32_t)sca->can->rx_data[7])<<16;

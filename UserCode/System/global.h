@@ -41,7 +41,7 @@ typedef struct
 
 
 #define MOTOR_NUM  2
-extern Sca_t scaMotor[MOTOR_NUM];
+extern Sca_t motor[MOTOR_NUM];
 extern Can_t fdcan1;
 extern Sca_Targte_t sca_target;
 

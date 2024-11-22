@@ -2,6 +2,33 @@
     "folders": [
         {
             "path": "."
+        },
+        {
+            "path": "../UserCode/Cmd"
+        },
+        {
+            "path": "../UserCode/EasyLogger"
+        },
+        {
+            "path": "../UserCode/FDCAN"
+        },
+        {
+            "path": "../UserCode/FreeRTOS_CLI"
+        },
+        {
+            "path": "../UserCode/INNFOS_NE30"
+        },
+        {
+            "path": "../UserCode/System"
+        },
+        {
+            "path": "../UserCode/Usart"
+        },
+        {
+            "path": "../Core/Inc"
+        },
+        {
+            "path": "../Core/Src"
         }
     ],
     "settings": {

@@ -139,10 +139,10 @@ static UBaseType_t uxParameterNumber = 1;   //总参数量
     else if (strstr(parameterArray[0], "vcp"))
     {
         log_v("SCA参数:");
-        log_v("velocity:\t%.2frpm", scaMotor[0].Velocity_Real);
-        log_v("position:\t%.2fR ", scaMotor[0].Position_Real);
-        log_v("angle:\t\t%.2f° ", scaMotor[0].Angle_Real);
-        log_v("current:\t%.2f", scaMotor[0].Current_Real);
+        log_v("velocity:\t%.2frpm", motor[0].Velocity_Real);
+        log_v("position:\t%.2fR ", motor[0].Position_Real);
+        log_v("angle:\t\t%.2f° ", motor[0].Angle_Real);
+        log_v("current:\t%.2f", motor[0].Current_Real);
     }
     else if (strstr(parameterArray[0], "s"))
     {
@@ -177,40 +177,40 @@ static UBaseType_t uxParameterNumber = 2;   //总参数量
     log_i("%s  %s\r\n", parameterArray[0], parameterArray[1]);
     if (strstr(parameterArray[0], "v"))
     {
-        if (scaMotor[0].Mode != SCA_Profile_Velocity_Mode)
+        if (motor[0].Mode != SCA_Profile_Velocity_Mode)
         {
             log_w("请先切换到速度模式 \r\n");
             return pdFALSE;
         }
-        scaMotor[0].Velocity_Target = atof(parameterArray[1]);
+        motor[0].Velocity_Target = atof(parameterArray[1]);
     }
     else if (strstr(parameterArray[0], "p"))
     {
-        if (scaMotor[0].Mode != SCA_Profile_Position_Mode)
+        if (motor[0].Mode != SCA_Profile_Position_Mode)
         {
             log_w("请先切换到位置模式 \r\n");
             return pdFALSE;
         }
         
-        scaMotor[0].Position_Target = atof(parameterArray[1]);
+        motor[0].Position_Target = atof(parameterArray[1]);
     }
     else if (strstr(parameterArray[0], "c"))
     {
-        if(scaMotor[0].Mode!= SCA_Current_Mode)
+        if(motor[0].Mode!= SCA_Current_Mode)
         {
             log_w("请先切换到电流模式 \r\n");
             return pdFALSE;
         }
-        scaMotor[0].Current_Target = atof(parameterArray[1]);
+        motor[0].Current_Target = atof(parameterArray[1]);
     }
     else if (strstr(parameterArray[0], "m"))
     {
         if (strstr(parameterArray[1], "v"))
-            scaMotor[0].Mode_Target =  SCA_Profile_Velocity_Mode;
+            motor[0].Mode_Target =  SCA_Profile_Velocity_Mode;
         else if (strstr(parameterArray[1], "p"))
-            scaMotor[0].Mode_Target =  SCA_Profile_Position_Mode;
+            motor[0].Mode_Target =  SCA_Profile_Position_Mode;
         else if(strstr(parameterArray[1], "c"))
-            scaMotor[0].Mode_Target =  SCA_Current_Mode;
+            motor[0].Mode_Target =  SCA_Current_Mode;
     }
     
 	return pdFALSE;

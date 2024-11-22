@@ -61,7 +61,7 @@ void sca_task_init(void)
  */
 static void sca_control_task(void * pvparameters)
 {
-    ScaInit(&scaMotor[0], 0x01, SCA_Profile_Velocity_Mode, &fdcan1);
+    ScaInit(&motor[0], Lite_NE30_36, 0X15, SCA_Profile_Velocity_Mode, &fdcan1);
     log_i("SCA Task Work! ");
     uint8_t last_mod = SCA_Profile_Velocity_Mode;
     
@@ -70,45 +70,45 @@ static void sca_control_task(void * pvparameters)
         static uint8_t err_t = 0;
         err_t++;
         vTaskDelay(1000);
-        SCA_Enable(&scaMotor[0]);
-        SCA_GetState(&scaMotor[0]);
+        SCA_Enable(&motor[0]);
+        SCA_GetState(&motor[0]);
         if (err_t == 3)//3s后报警一次
         {
-            log_e("sca%d is not online", scaMotor[0].id);
+            log_e("sca%d is not online", motor[0].id);
         }
-        if (scaMotor[0].Power_State == 0)
+        if (motor[0].Power_State == 0)
             continue;
         else
         {
-            log_i("sca%d power on and work in %s", scaMotor[0].id, find_name_of_mode(scaMotor[0].Mode));
-            SCA_SetMode(&scaMotor[0], SCA_Profile_Velocity_Mode);
-            SCA_SetPPMaxcVelocity(&scaMotor[0], 200);
-            SCA_GetAllparameters(&scaMotor[0]);
+            log_i("sca%d power on and work in %s", motor[0].id, find_name_of_mode(motor[0].Mode));
+            SCA_SetMode(&motor[0], SCA_Profile_Velocity_Mode);
+            SCA_SetPPMaxcVelocity(&motor[0], 20);
+            SCA_GetAllparameters(&motor[0]);
             break;
         }
     }    
     for(;;)
     {       
-        if (scaMotor[0].Mode_Target!= scaMotor[1].Mode)
+        if (motor[0].Mode_Target!= motor[1].Mode)
         {
-            SCA_SetMode(&scaMotor[0], scaMotor[0].Mode_Target);
+            SCA_SetMode(&motor[0], motor[0].Mode_Target);
         }
 
-        switch (scaMotor[0].Mode)
+        switch (motor[0].Mode)
         {
         case SCA_Current_Mode:
-            SCA_SetCurrent(&scaMotor[0]);
+            SCA_SetCurrent(&motor[0]);
             break;
         case SCA_Profile_Position_Mode:
-            SCA_SetPosition(&scaMotor[0]);
+            SCA_SetPosition(&motor[0]);
             break;
         case SCA_Profile_Velocity_Mode:
-            SCA_SetVelocity(&scaMotor[0]);
+            SCA_SetVelocity(&motor[0]);
             break;
         default:
             break;
         }
-        SCA_GetCVP(&scaMotor[0]);
+        SCA_GetCVP(&motor[0]);
         vTaskDelay(10);
     }
 }
@@ -124,8 +124,8 @@ void sca_data_process_task(void *pvparameters)
         xSemaphoreTake(fdcan1.rx_sema, portMAX_DELAY);
         switch (fdcan1.rx_header_t->Identifier)
         {
-        case 0x01:
-            SCA_DataProcess(&scaMotor[0]);
+        case 0x015:
+            SCA_DataProcess(&motor[0]);
             break;
         
         default:
@@ -141,18 +141,18 @@ void sca_data_process_task(void *pvparameters)
 void sca_tim_callback(TimerHandle_t xTimer)
 {
     static uint8_t err_t = 0;
-    if (scaMotor[0].Online_State == 0)
+    if (motor[0].Online_State == 0)
         err_t++;
     else
     {
         err_t = 0; 
-        scaMotor[0].Online_State = 0;
-        SCA_HeartBeat(&scaMotor[0]);
+        motor[0].Online_State = 0;
+        SCA_HeartBeat(&motor[0]);
     }
 
     if (err_t >= 3)
     {
-        log_e("sca%d is not online", &scaMotor[0].id);
+        log_e("sca%d is not online", &motor[0].id);
         xTimerStop(SCA_TIMER, 0);
     }   
 }

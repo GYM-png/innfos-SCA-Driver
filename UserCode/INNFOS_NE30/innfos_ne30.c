@@ -11,6 +11,26 @@ void R4dataProcess(Sca_t * sca);
 void R5dataProcess(Sca_t * sca);
 
 
+static void SCA_InitModelParameters(Sca_t * sca, sca_model_e model)
+{
+    sca->model = model;
+    switch (model)
+    {
+    case NE30:
+        sca->ReductionRatio = 1.0f;
+        sca->Velocity_MaxRange = 6000.0f;
+        break;
+    
+    case Lite_NE30_36:
+        sca->ReductionRatio = 36.0f;
+        sca->Velocity_MaxRange = 6000.0f;
+        break;
+
+    default:
+        break;
+    }
+}
+
 
 /**
  * @brief Enables the SCA motor.
@@ -244,13 +264,13 @@ uint8_t SCA_SetPosition(Sca_t * sca)
 {
     if(sca == NULL)
         return ERROR;
-
-    if(sca->Position_Target < -127.0f || sca->Position_Target > 127.0f)
-        log_w("SCA 参数超范围 ");
+    if((sca->Position_Target * sca->ReductionRatio) < -127.0f || 
+       (sca->Position_Target * sca->ReductionRatio) > 127.0f)
+        log_w("SCA 参数超范围 当前参数%.2fR", sca->Position_Target);
 
     if (sca->Mode == SCA_Position_Mode || sca->Mode == SCA_Profile_Position_Mode)
     {
-        return SCA_Write_3(sca, W3_Position, sca->Position_Target);
+        return SCA_Write_3(sca, W3_Position, sca->Position_Target * sca->ReductionRatio);
     }
 
     log_w("SCA 模式不匹配 ");
@@ -276,11 +296,11 @@ uint8_t SCA_SetAngle(Sca_t * sca)
     if(sca == NULL)
         return ERROR;
 
-    float position = sca->Angle_Target / 360.0f;
+    float position = sca->Angle_Target / 360.0f * sca->ReductionRatio;
 
     if(position < -127.0f || position > 127.0f)
     {
-        log_w("SCA 参数超范围 ");
+        log_w("SCA 参数超范围 当前参数:%.2f°",sca->Angle_Target);
     }
     if (sca->Mode == SCA_Position_Mode || sca->Mode == SCA_Profile_Position_Mode)
     {
@@ -336,7 +356,7 @@ uint8_t SCA_SetZeroAngle(Sca_t * sca, float angle)
     }
     else
     {
-        float position = angle / 360.0f;
+        float position = angle / 360.0f * sca->ReductionRatio;
         return SCA_Write_3(sca, W3_HomingValue, position);
     }
 }
@@ -397,7 +417,7 @@ uint8_t SCA_SetPPAcceleration(Sca_t * sca, float acce)
         return ERROR;
     
     uint8_t result = ERROR;
-    acce /= Profile_Scal;
+    acce = acce / Profile_Scal * sca->ReductionRatio;
 
     result = SCA_Write_3(sca, W3_PPMaxAcceleration, acce);
     if (result != OK)   
@@ -430,7 +450,7 @@ uint8_t SCa_SetPPDeceleration(Sca_t * sca, float dece)
         return ERROR;
 
     uint8_t result = ERROR;
-    dece /= Profile_Scal;
+    dece = dece / Profile_Scal * sca->ReductionRatio;
     result = SCA_Write_3(sca, W3_PPMaxDeceleration, dece);
     if (result != OK)
     {
@@ -482,7 +502,7 @@ uint8_t SCA_SetPPMaxcVelocity(Sca_t * sca, float max_velocity)
     
     uint8_t result = ERROR;
     uint8_t err_t = 0;
-    max_velocity /= Profile_Scal;
+    max_velocity = max_velocity / Profile_Scal * sca->ReductionRatio;
 
     result = SCA_Write_3(sca, W3_PPMaxVelocity, max_velocity);
     if (result != OK)
@@ -518,7 +538,7 @@ uint8_t SCA_SetVelocity(Sca_t * sca)
     if(sca == NULL)
         return ERROR;
     
-    return SCA_Write_3(sca, W3_Velocity, sca->Velocity_Target);
+    return SCA_Write_3(sca, W3_Velocity, sca->Velocity_Target * sca->ReductionRatio);
 }
 
 /**
@@ -599,7 +619,7 @@ uint8_t SCA_SetPVAcceleration(Sca_t * sca, float acceleration)
         return ERROR;
 
     uint8_t result = ERROR;
-    acceleration /= Profile_Scal;
+    acceleration = acceleration / Profile_Scal * sca->ReductionRatio;
     result = SCA_Write_3(sca, W3_PVMaxAcceleration, acceleration);
     if (result!= OK)
     {
@@ -629,7 +649,7 @@ uint8_t SCA_SetPVDeceleration(Sca_t * sca, float deceleration)
         return ERROR;
 
     uint8_t result = ERROR;
-    deceleration /= Profile_Scal;
+    deceleration = deceleration / Profile_Scal * sca->ReductionRatio;
     result = SCA_Write_3(sca, W3_PVMaxDeceleration, deceleration); 
     if (result!= OK)
     {   
@@ -698,7 +718,7 @@ uint8_t SCA_SetPVMaxVelocity(Sca_t * sca, float maxVelocity)
     if(sca == NULL)
         return ERROR;
 
-    maxVelocity /= Profile_Scal;
+    maxVelocity = maxVelocity / Profile_Scal * sca->ReductionRatio;
     uint8_t result = ERROR;
     result = SCA_Write_3(sca, W3_PVMaxVelocity, maxVelocity);
     if (result!= OK)
@@ -978,15 +998,25 @@ uint8_t SCA_DataProcess(Sca_t * sca)
 
 
 
+
 /**
- * @brief initialize the sca controller and set the work mode
- * @param sca sca handle
- * @param id sca controler id
- * @param mod work mode you want to set
- * @param can can bus handle of sca controler 
- * @return 
+ * @brief Initializes the SCA motor.
+ *
+ * This function initializes the SCA motor with the given parameters.
+ * It sets the motor's ID, target mode, CAN interface, and other necessary variables.
+ * It then enables the motor, gets its state, sets the target mode, and initializes the model parameters.
+ * If the current maximum range cannot be obtained within 20 attempts, it logs an error message and returns an error.
+ *
+ * @param sca Pointer to the SCA_t structure representing the SCA motor.
+ * @param model The model of the SCA motor.
+ * @param id The ID of the SCA motor.
+ * @param workmode The target mode of the SCA motor.
+ * @param can Pointer to the CAN interface used for communication with the SCA motor.
+ *
+ * @return Returns OK if the initialization is successful.
+ *         Returns ERROR if the sca pointer or can pointer is NULL, or if the current maximum range cannot be obtained within 20 attempts.
  */
-uint8_t ScaInit(Sca_t* sca, uint8_t id, uint8_t mode, Can_t* can)
+uint8_t ScaInit(Sca_t* sca, sca_model_e model, uint8_t id, uint8_t workmode, Can_t* can)
 {
 
     if(sca == NULL || can == NULL)
@@ -994,7 +1024,7 @@ uint8_t ScaInit(Sca_t* sca, uint8_t id, uint8_t mode, Can_t* can)
 
     uint8_t err_t = 0;
     sca->id = id;
-    sca->Mode_Target = mode;
+    sca->Mode_Target = workmode;
     sca->Mode = 0x00;
     sca->can = can;
     sca->Online_State = 1;
@@ -1005,6 +1035,7 @@ uint8_t ScaInit(Sca_t* sca, uint8_t id, uint8_t mode, Can_t* can)
     SCA_GetState(sca);
     vTaskDelay(10);
     SCA_SetMode(sca, sca->Mode_Target);
+    SCA_InitModelParameters(sca, model);
     while (sca->Current_MaxRange == 0)
     {
         err_t++;
@@ -1018,6 +1049,7 @@ uint8_t ScaInit(Sca_t* sca, uint8_t id, uint8_t mode, Can_t* can)
     }
     return OK;
 }
+
 
 /************************************user code************************************************************* */
 
@@ -1050,25 +1082,26 @@ char* find_name_of_mode(uint8_t index)
 
 void show_sca_t(void)
 {
-    SCA_GetAllparameters(&scaMotor[0]);
+    SCA_GetAllparameters(&motor[0]);
     vTaskDelay(5);
-    log_v("work mode:\t\t%s", find_name_of_mode(scaMotor[0].Mode));
-    log_v("target current:\t\t%.2f", scaMotor[0].Current_Target);
-    log_v("target velocity:\t%.2frpm", scaMotor[0].Velocity_Target);
-    log_v("target position:\t%.2fR", scaMotor[0].Position_Target);
-    log_v("real current:\t\t%.2fA", scaMotor[0].Current_Real);
-    log_v("real velocity:\t\t%.2frpm", scaMotor[0].Velocity_Real);
-    log_v("real position:\t\t%.2fR", scaMotor[0].Position_Real);
-    log_v("serial numbe:\t\t%02x %02x %02x %02x %02x %02x", scaMotor[0].Serial_Num[0], scaMotor[0].Serial_Num[1],scaMotor[0].Serial_Num[2],scaMotor[0].Serial_Num[3],scaMotor[0].Serial_Num[4], scaMotor[0].Serial_Num[5]);
-    log_v("power voltage:\t\t%.2fV", scaMotor[0].Voltage);
-    log_v("velocity limit:\t\t%.2fRPM", scaMotor[0].Velocity_Limit);
-    log_v("motor temperture:\t%.2f°C", scaMotor[0].Motor_Temp);
-    log_v("pp acceleration:\t%.2f", scaMotor[0].PP_Max_Acceleration);
-    log_v("pp deceleration:\t%.2f", scaMotor[0].PP_Max_Deceleration);
-    log_v("pp max velocity:\t%.2fRPM", scaMotor[0].PP_Max_Velocity);
-    log_v("pv acceleration:\t%.2f", scaMotor[0].PV_Max_Acceleration);
-    log_v("pv deceleration:\t%.2f", scaMotor[0].PV_Max_Deceleration);
-    log_v("pv max velocity:\t%.2fRPM", scaMotor[0].PV_Max_Velocity);
-    log_v("max current range:\t%.2fA", scaMotor[0].Current_MaxRange);
-    log_v("limit current:\t\t%.2fA", scaMotor[0].Current_Limit);
+    log_v("work mode:\t\t%s", find_name_of_mode(motor[0].Mode));
+    log_v("reduction ratio rate:\t%.1f", motor[0].ReductionRatio);
+    log_v("target current:\t\t%.2f", motor[0].Current_Target);
+    log_v("target velocity:\t%.2frpm", motor[0].Velocity_Target);
+    log_v("target position:\t%.2fR", motor[0].Position_Target);
+    log_v("real current:\t\t%.2fA", motor[0].Current_Real);
+    log_v("real velocity:\t\t%.2frpm", motor[0].Velocity_Real);
+    log_v("real position:\t\t%.2fR", motor[0].Position_Real);
+    log_v("serial numbe:\t\t%02x %02x %02x %02x %02x %02x", motor[0].Serial_Num[0], motor[0].Serial_Num[1],motor[0].Serial_Num[2],motor[0].Serial_Num[3],motor[0].Serial_Num[4], motor[0].Serial_Num[5]);
+    log_v("power voltage:\t\t%.2fV", motor[0].Voltage);
+    log_v("velocity limit:\t\t%.2fRPM", motor[0].Velocity_Limit);
+    log_v("motor temperture:\t%.2f°C", motor[0].Motor_Temp);
+    log_v("pp acceleration:\t%.2f", motor[0].PP_Max_Acceleration);
+    log_v("pp deceleration:\t%.2f", motor[0].PP_Max_Deceleration);
+    log_v("pp max velocity:\t%.2fRPM", motor[0].PP_Max_Velocity);
+    log_v("pv acceleration:\t%.2f", motor[0].PV_Max_Acceleration);
+    log_v("pv deceleration:\t%.2f", motor[0].PV_Max_Deceleration);
+    log_v("pv max velocity:\t%.2fRPM", motor[0].PV_Max_Velocity);
+    log_v("max current range:\t%.2fA", motor[0].Current_MaxRange);
+    log_v("limit current:\t\t%.2fA", motor[0].Current_Limit);
 }
