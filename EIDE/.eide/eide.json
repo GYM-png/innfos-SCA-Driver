@@ -35,34 +35,64 @@
                 "name": "Core",
                 "files": [
                   {
+                    "path": "../Core/Src/main.c"
+                  },
+                  {
+                    "path": "../Core/Src/gpio.c"
+                  },
+                  {
+                    "path": "../Core/Src/freertos.c"
+                  },
+                  {
                     "path": "../Core/Src/dma.c"
                   },
                   {
                     "path": "../Core/Src/fdcan.c"
                   },
                   {
-                    "path": "../Core/Src/freertos.c"
+                    "path": "../Core/Src/usart.c"
                   },
                   {
-                    "path": "../Core/Src/gpio.c"
-                  },
-                  {
-                    "path": "../Core/Src/main.c"
+                    "path": "../Core/Src/stm32h7xx_it.c"
                   },
                   {
                     "path": "../Core/Src/stm32h7xx_hal_msp.c"
                   },
                   {
                     "path": "../Core/Src/stm32h7xx_hal_timebase_tim.c"
-                  },
-                  {
-                    "path": "../Core/Src/stm32h7xx_it.c"
-                  },
-                  {
-                    "path": "../Core/Src/usart.c"
                   }
                 ],
                 "folders": []
+              },
+              {
+                "name": "USB_DEVICE",
+                "files": [],
+                "folders": [
+                  {
+                    "name": "App",
+                    "files": [
+                      {
+                        "path": "../USB_DEVICE/App/usb_device.c"
+                      },
+                      {
+                        "path": "../USB_DEVICE/App/usbd_desc.c"
+                      },
+                      {
+                        "path": "../USB_DEVICE/App/usbd_cdc_if.c"
+                      }
+                    ],
+                    "folders": []
+                  },
+                  {
+                    "name": "Target",
+                    "files": [
+                      {
+                        "path": "../USB_DEVICE/Target/usbd_conf.c"
+                      }
+                    ],
+                    "folders": []
+                  }
+                ]
               }
             ]
           }
@@ -75,13 +105,13 @@
             "path": "../UserCode/Cmd/cmd.c"
           },
           {
+            "path": "../UserCode/EasyLogger/elog.c"
+          },
+          {
             "path": "../UserCode/EasyLogger/elog_port.c"
           },
           {
             "path": "../UserCode/EasyLogger/elog_utils.c"
-          },
-          {
-            "path": "../UserCode/EasyLogger/elog.c"
           },
           {
             "path": "../UserCode/FreeRTOS_CLI/FreeRTOS_CLI.c"
@@ -103,22 +133,16 @@
         "files": [],
         "folders": [
           {
-            "name": "CMSIS",
-            "files": [
-              {
-                "path": "../Core/Src/system_stm32h7xx.c"
-              }
-            ],
-            "folders": []
-          },
-          {
             "name": "STM32H7xx_HAL_Driver",
             "files": [
               {
-                "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.c"
+                "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd.c"
               },
               {
-                "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_fdcan.c"
+                "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pcd_ex.c"
+              },
+              {
+                "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_usb.c"
               },
               {
                 "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc.c"
@@ -154,6 +178,9 @@
                 "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c"
               },
               {
+                "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.c"
+              },
+              {
                 "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.c"
               },
               {
@@ -164,6 +191,9 @@
               },
               {
                 "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c"
+              },
+              {
+                "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_fdcan.c"
               },
               {
                 "path": "../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c"
@@ -179,12 +209,24 @@
               }
             ],
             "folders": []
+          },
+          {
+            "name": "CMSIS",
+            "files": [
+              {
+                "path": "../Core/Src/system_stm32h7xx.c"
+              }
+            ],
+            "folders": []
           }
         ]
       },
       {
         "name": "FDCAN",
         "files": [
+          {
+            "path": "../UserCode/FDCAN/bsp_fdcan.c"
+          },
           {
             "path": "../UserCode/FDCAN/my_fdcan.c"
           }
@@ -199,9 +241,6 @@
             "name": "FreeRTOS",
             "files": [
               {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c"
-              },
-              {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/croutine.c"
               },
               {
@@ -209,12 +248,6 @@
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/list.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c"
-              },
-              {
-                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c"
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/queue.c"
@@ -227,11 +260,47 @@
               },
               {
                 "path": "../Middlewares/Third_Party/FreeRTOS/Source/timers.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c"
+              },
+              {
+                "path": "../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c"
+              }
+            ],
+            "folders": []
+          },
+          {
+            "name": "USB_Device_Library",
+            "files": [
+              {
+                "path": "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c"
+              },
+              {
+                "path": "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c"
+              },
+              {
+                "path": "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c"
+              },
+              {
+                "path": "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c"
               }
             ],
             "folders": []
           }
         ]
+      },
+      {
+        "name": "MyLibrary",
+        "files": [
+          {
+            "path": "../UserCode/MyLib/mymath.c"
+          }
+        ],
+        "folders": []
       },
       {
         "name": "SCA",
@@ -240,10 +309,10 @@
             "path": "../UserCode/INNFOS_NE30/innfos_ne30.c"
           },
           {
-            "path": "../UserCode/INNFOS_NE30/ne30_task.c"
+            "path": "../UserCode/INNFOS_NE30/sca_protocol.c"
           },
           {
-            "path": "../UserCode/INNFOS_NE30/sca_protocol.c"
+            "path": "../UserCode/INNFOS_NE30/ne30_task.c"
           }
         ],
         "folders": []
@@ -268,6 +337,15 @@
           }
         ],
         "folders": []
+      },
+      {
+        "name": "USB_CDC",
+        "files": [
+          {
+            "path": "../UserCode/USB/myusb_cdc.c"
+          }
+        ],
+        "folders": []
       }
     ]
   },
@@ -275,13 +353,11 @@
   "deviceName": null,
   "packDir": ".pack/Keil/STM32H7xx_DFP.3.1.1",
   "miscInfo": {
-    "uid": "ceb1e44dce729f7ac62ff19be053610b"
+    "uid": "d3973a59cc271e87fd3324e701eb8e82"
   },
   "targets": {
     "SCA_Driver": {
-      "excludeList": [
-        "<virtual_root>/FDCAN/bsp_fdcan.c"
-      ],
+      "excludeList": [],
       "toolchain": "AC5",
       "compileConfig": {
         "cpuType": "Cortex-M7",
@@ -434,9 +510,15 @@
           "../UserCode/INNFOS_NE30",
           "../UserCode/System",
           "../UserCode/Usart",
+          "../USB_DEVICE/App",
+          "../USB_DEVICE/Target",
+          "../Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+          "../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc",
           ".cmsis/include",
           "../MDK-ARM/RTE/_SCA_Driver",
-          ".eide/deps"
+          ".eide/deps",
+          "../UserCode/USB",
+          "../UserCode/MyLib"
         ],
         "libList": [],
         "sourceDirList": [],

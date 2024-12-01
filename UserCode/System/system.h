@@ -10,6 +10,7 @@
 #include "event_groups.h"
 #include "elog.h"
 #include "cmd.h"
+#include "mymath.h"
 
 void debug_init(void);
 void system_reset_soft(const char* tag, ...);

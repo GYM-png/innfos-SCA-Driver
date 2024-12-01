@@ -3,57 +3,21 @@
 #include "global.h"
 #include "system.h"
 #include "my_fdcan.h"
+#include "myusb_cdc.h"
 
+#define CURRENT_BUFFER_SIZE 100
+Weight_Filter_t current_filter[MOTOR_NUM] = {0};
+float *current_buffer[MOTOR_NUM] = {NULL, NULL};
+float current_weight[CURRENT_BUFFER_SIZE] = {0};
 
-/**
- * @defgroup sca control task相关参数
- */
-#define SCA_CONTROL_TASK_PRIO 3  //任务优先级
-#define SCA_CONTROL_TASK_SIZE 256 //任务堆栈大小
-TaskHandle_t SCA_CONTROL_TASK_Handler;//任务句柄
-void sca_control_task(void *pvparameters);
-
-/**
- * @defgroup sca data process task相关参数
- */
-#define SCA_DATA_PROCESS_TASK_PRIO 5
-#define SCA_DATA_PROCESS_TASK_SIZE 256
-TaskHandle_t SCA_DATA_PROCESS_TASK_Handler;
-void sca_data_process_task(void *pvparameters);
-
-/**
- * @defgroup sca timer 
- */
-TimerHandle_t SCA_TIMER;
-void sca_tim_callback(TimerHandle_t xTimer);
-
-/**
- * @brief sca task initialization
- */
-void sca_task_init(void)
+static void current_weight_init(void)
 {
-    can_init(&fdcan1, &hfdcan1);
-    xTaskCreate((TaskFunction_t )sca_control_task,           //任务函数
-                (const char *   )"sca control",              //任务名称
-                (uint16_t       )SCA_CONTROL_TASK_SIZE,      //任务堆栈大小
-                (void *         )NULL,                       //任务参数
-                (UBaseType_t    )SCA_CONTROL_TASK_PRIO,      //任务优先级
-                (TaskHandle_t * )&SCA_CONTROL_TASK_Handler); //任务句句柄
-
-    xTaskCreate((TaskFunction_t )sca_data_process_task,      //任务函数
-                (const char *   )"sca data process",         //任务名称
-                (uint16_t       )SCA_DATA_PROCESS_TASK_SIZE, //任务堆栈大小
-                (void *         )NULL,                       //任务参数
-                (UBaseType_t    )SCA_DATA_PROCESS_TASK_PRIO, //任务优先级
-                (TaskHandle_t * )&SCA_CONTROL_TASK_Handler); //任务句句柄
-
-    SCA_TIMER = xTimerCreate((const char* const)"heartbeat",
-                             (TickType_t       )1000,
-                             (const UBaseType_t)pdTRUE,
-                             (void * const     )NULL,
-                             (TimerCallbackFunction_t)sca_tim_callback);
-    xTimerStart(SCA_TIMER, 0);
+    for (uint32_t i = 0; i < CURRENT_BUFFER_SIZE; i++)
+    {
+        current_weight[i] = i *0.1;
+    }
 }
+
 
 static void motor_init(void)
 {
@@ -193,9 +157,15 @@ static void motor_error_check(void)
  */
 static void sca_control_task(void * pvparameters)
 {
-    ScaInit(&motor[0], Lite_NE30_36, 0X15, SCA_Profile_Velocity_Mode, &fdcan1);//sca 句柄初始化
-    ScaInit(&motor[1], NE30,         0x01, SCA_Profile_Velocity_Mode, &fdcan1);
+    ScaInit(&motor[0], Lite_NE30_36, 0X15, SCA_Profile_Position_Mode, &fdcan1);//sca 句柄初始化
+    ScaInit(&motor[1], NE30,         0x02, SCA_Current_Mode, &fdcan1);
     motor_init();//电机初始化
+    current_buffer[0] = (float *)pvPortMalloc(sizeof(float) * CURRENT_BUFFER_SIZE);
+    current_buffer[1] = (float *)pvPortMalloc(sizeof(float) * CURRENT_BUFFER_SIZE);
+    current_weight_init();
+    wfilter_init(&current_filter[0], current_buffer[0], current_weight, CURRENT_BUFFER_SIZE);
+    wfilter_init(&current_filter[1], current_buffer[1], current_weight, CURRENT_BUFFER_SIZE);
+    float current_cal[MOTOR_NUM] = {0, 0};//滤波后的电流值
     log_i("SCA Task Work! ");  
     for(;;)
     {       
@@ -205,6 +175,13 @@ static void sca_control_task(void * pvparameters)
         motor_control_update(&motor[1]);
         SCA_GetCVP(&motor[0]);
         SCA_GetCVP(&motor[1]);
+        wfilter_add_data(&current_filter[0], motor[0].Current_Real);//添加采集数据
+        wfilter_add_data(&current_filter[1], motor[1].Current_Real);
+        current_cal[0] = wfilter_cal(&current_filter[0]);//计算滤波值
+        current_cal[1] = wfilter_cal(&current_filter[1]);
+        usb_cdc_println("%.2f, %.2f, %.2f, %.2f", current_cal[0], current_cal[0], motor[0].Position_Real, motor[1].Position_Real);
+        motor[0].Position_Target = motor[1].Position_Real;
+        motor[1].Current_Target = motor[0].Current_Real * 0.7;
         vTaskDelay(10);
     }
 }
@@ -238,4 +215,55 @@ void sca_tim_callback(TimerHandle_t xTimer)
 {
     motor_online_check();  
     // motor_error_check();
+}
+
+
+/**
+ * @defgroup sca control task相关参数
+ */
+#define SCA_CONTROL_TASK_PRIO 3  //任务优先级
+#define SCA_CONTROL_TASK_SIZE 256 //任务堆栈大小
+TaskHandle_t SCA_CONTROL_TASK_Handler;//任务句柄
+void sca_control_task(void *pvparameters);
+
+/**
+ * @defgroup sca data process task相关参数
+ */
+#define SCA_DATA_PROCESS_TASK_PRIO 5
+#define SCA_DATA_PROCESS_TASK_SIZE 256
+TaskHandle_t SCA_DATA_PROCESS_TASK_Handler;
+void sca_data_process_task(void *pvparameters);
+
+/**
+ * @defgroup sca timer 
+ */
+TimerHandle_t SCA_TIMER;
+void sca_tim_callback(TimerHandle_t xTimer);
+
+/**
+ * @brief sca task initialization
+ */
+void sca_task_init(void)
+{
+    can_init(&fdcan1, &hfdcan1);
+    xTaskCreate((TaskFunction_t )sca_control_task,           //任务函数
+                (const char *   )"sca control",              //任务名称
+                (uint16_t       )SCA_CONTROL_TASK_SIZE,      //任务堆栈大小
+                (void *         )NULL,                       //任务参数
+                (UBaseType_t    )SCA_CONTROL_TASK_PRIO,      //任务优先级
+                (TaskHandle_t * )&SCA_CONTROL_TASK_Handler); //任务句句柄
+
+    xTaskCreate((TaskFunction_t )sca_data_process_task,      //任务函数
+                (const char *   )"sca data process",         //任务名称
+                (uint16_t       )SCA_DATA_PROCESS_TASK_SIZE, //任务堆栈大小
+                (void *         )NULL,                       //任务参数
+                (UBaseType_t    )SCA_DATA_PROCESS_TASK_PRIO, //任务优先级
+                (TaskHandle_t * )&SCA_CONTROL_TASK_Handler); //任务句句柄
+
+    SCA_TIMER = xTimerCreate((const char* const)"heartbeat",
+                             (TickType_t       )1000,
+                             (const UBaseType_t)pdTRUE,
+                             (void * const     )NULL,
+                             (TimerCallbackFunction_t)sca_tim_callback);
+    xTimerStart(SCA_TIMER, 0);
 }

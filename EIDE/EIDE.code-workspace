@@ -4,31 +4,19 @@
             "path": "."
         },
         {
-            "path": "../UserCode/Cmd"
+            "path": "../Core"
         },
         {
-            "path": "../UserCode/EasyLogger"
+            "path": "../Drivers"
         },
         {
-            "path": "../UserCode/FDCAN"
+            "path": "../Middlewares"
         },
         {
-            "path": "../UserCode/FreeRTOS_CLI"
+            "path": "../USB_DEVICE"
         },
         {
-            "path": "../UserCode/INNFOS_NE30"
-        },
-        {
-            "path": "../UserCode/System"
-        },
-        {
-            "path": "../UserCode/Usart"
-        },
-        {
-            "path": "../Core/Inc"
-        },
-        {
-            "path": "../Core/Src"
+            "path": "../UserCode"
         }
     ],
     "settings": {
